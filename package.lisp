@@ -37,7 +37,7 @@
            
            #:graph
            #:graph-nodes
-
+           #:copy-graph
            #:add-edge
            #:remove-edge
            #:edgep
@@ -45,6 +45,7 @@
            #:find-edges-from
            #:find-edges-to
            #:find-edges-containing
+           #:neighbors
            
            #:bfs
            #:bfs-map
