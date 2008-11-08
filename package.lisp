@@ -51,4 +51,4 @@
            #:dfs
            #:dfs-map
 
-           #:edge-list-grpaph))
+           #:edge-list-graph))
