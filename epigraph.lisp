@@ -51,6 +51,10 @@
   there will be concrete subclasses of graph with different
   implementations of storing the nodes and edges."))
 
+(defgeneric copy-graph (graph)
+  (:documentation "Returns a copy of the graph which will contain
+  copies of the edges, but the same nodes as the original graph."))
+
 (defgeneric add-edge (graph node1 node2)
   (:documentation "Adds an edge to the graph from node1 to node2."))
 
@@ -77,6 +81,10 @@
 (defgeneric find-edges-containing (graph node)
   (:documentation "Returns a list of the edges in graph that start or
   end with node."))
+
+(defgeneric neighbors (graph node)
+  (:documentation "Returns a list of the nodes that are connected to
+  node."))
 
 (defgeneric bfs (graph start end &key key test)
   (:documentation "Performs a breadth-first-search on graph starting
@@ -115,13 +123,12 @@
                         (return-from bfs
                           (nreverse (cons node path))))
                       (push node visited)
-                      (let ((edges (find-edges-containing graph node)))
-                        (let ((neighbors (map (type-of edges) #'cdr edges)))
-                          (map nil
-                               (lambda (x)
-                                 (unless (member x visited)
-                                   (push (cons x (cons node path)) children)))
-                               neighbors)))))
+                      (let ((neighbors (neighbors graph node)))
+                        (map nil
+                             (lambda (x)
+                               (unless (member x visited)
+                                 (push (cons x (cons node path)) children)))
+                             neighbors))))
                   node-set-list)
              (when children
                (bfs-visit children)))))
@@ -143,13 +150,12 @@
                                (funcall test (funcall key node) end))
                       (return-from bfs-map))
                     (push node visited)
-                    (let ((edges (find-edges-containing graph node)))
-                      (let ((neighbors (map (type-of edges) #'cdr edges)))
-                        (map nil
-                             (lambda (x)
-                               (unless (member x visited)
-                                 (push x children)))
-                             neighbors))))
+                    (let ((neighbors (neighbors graph node)))
+                      (map nil
+                           (lambda (x)
+                             (unless (member x visited)
+                               (push x children)))
+                           neighbors)))
                   node-list)
              (when children
                (bfs-visit children)))))
@@ -160,14 +166,13 @@
     (labels ((dfs-visit (node path)
                (if (funcall test (funcall key node) end)
                    (return-from dfs (nreverse (cons node path)))
-                   (let ((edges (find-edges-containing graph node)))
-                     (let ((neighbors (map (type-of edges) #'cdr edges)))
-                       (map nil
-                            (lambda (x)
-                              (unless (member x visited)
-                                (push x visited)
-                                (dfs-visit x (cons node path))))
-                            neighbors))))))
+                   (let ((neighbors (neighbors graph node)))
+                     (map nil
+                          (lambda (x)
+                            (unless (member x visited)
+                              (push x visited)
+                              (dfs-visit x (cons node path))))
+                          neighbors)))))
       (dfs-visit start nil))))
 
 (defmethod dfs-map ((graph graph) start fn
@@ -181,16 +186,14 @@
                (when (and end-supplied-p
                           (funcall test (funcall key node) end))
                  (return-from dfs-map))
-               (let ((edges (find-edges-containing graph node)))
-                 (let ((neighbors (map (type-of edges) #'cdr edges)))
-                   (map nil
-                        (lambda (x)
-                          (unless (member x visited)
-                            (push x visited)
-                            (dfs-visit x (cons node path))))
-                        neighbors)))))
+               (let ((neighbors (neighbors graph node)))
+                 (map nil
+                      (lambda (x)
+                        (unless (member x visited)
+                          (push x visited)
+                          (dfs-visit x (cons node path))))
+                      neighbors))))
       (dfs-visit start nil))))
-
 
 ;;;
 ;;; edge list graph
@@ -201,6 +204,11 @@
 
 (defmethod graph-edges ((graph edge-list-graph))
   (graph-edge-list graph))
+
+(defmethod copy-graph ((graph edge-list-graph))
+  (let ((new (make-instance (class-of graph))))
+    (setf (graph-nodes new) (graph-nodes graph)
+          (graph-edge-list new) (copy-tree (graph-edge-list graph)))))
 
 (defmethod add-edge ((graph edge-list-graph) (node1 node) (node2 node))
   (pushnew node1 (graph-nodes graph))
@@ -229,4 +237,10 @@
 (defmethod find-edges-containing ((graph edge-list-graph) node)
   (union (find-edges-from graph node)
          (find-edges-to graph node)))
+
+(defmethod neighbors (graph element) 
+  (let ((edges (find-edges-containing graph element)))
+    (remove element
+            (union (map (type-of edges) #'car edges)
+                   (map (type-of edges) #'cdr edges)))))
 
