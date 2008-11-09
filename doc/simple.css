@@ -1,0 +1,129 @@
+
+body {
+    color: #333;
+    background-color: #FFF;
+    background-attachment: fixed;
+    font-size: 12px;
+    font-family: "helvetica neue", "helvetica" sans-serif;
+    padding: 12px;
+    counter-reset: chapter;
+}
+
+div[class~="title"] {
+   font-style: normal;
+   font-weight: bold;
+   padding: 0px;
+   margin-top: 0px;
+   margin-bottom: 0px;
+   font-size: 20px;
+   border-bottom: 1px solid;
+}
+
+h1 {
+   padding: 2px;
+   margin-top: 2px;
+   padding-top: 4px;
+   font-size: 18px;
+   font-style: italic;
+   padding-bottom: 6px;
+}
+
+h2[class~="author"] {
+   padding-top: 0px;
+   padding-bottom: 0px;
+   margin-top: 2px;
+   margin-bottom: 2px;
+}
+
+h2[class~="date"] {
+   padding-top: 0px;
+   padding-bottom: 0px;
+   margin-top: 2px;
+   margin-bottom: 2px;
+}
+
+h2 {
+   font-size: 16px;
+}
+
+h3 {
+   font-size: 14px;
+}
+
+h4 {
+   font-size: 12px;
+}
+
+ul {
+   padding-left: 6px;
+   margin-left: 6px;
+}
+
+li {
+   margin-left: 12px;
+}
+
+li[class~="pub"] {
+   padding-top: 3px;
+   margin-left: 6px;
+   font-size: 9px;
+}
+
+tbody[class~="nav2"] { 
+   text-align: left;
+}
+
+table[class~="nav2"] {
+   padding-top: 24px;
+}
+
+tr, td, tbody, table {
+   border-collapse: collapse;
+   vertical-align: top;
+}
+
+tbody {
+   vertical-align: top;
+}
+
+td {
+   vertical-align: top;
+   padding: 4px;
+}
+
+pre {
+}
+
+p {
+    line-height: 125%;
+  }
+
+div[class~="lisp"] {
+    background: #DDD;
+    font-size: 12px;
+    padding: 12px;
+    margin: 4px;
+}
+
+div[class~="lisp"] > code > pre {
+ margin: 0px;
+}
+
+div[class~="lisp"] code[class~="results"] {
+  font-style: italic;
+}
+
+div[class~="doc"] {
+    border: solid green 1px;
+    margin: 4px;
+    padding: 2px;
+}
+
+div[class~="doc"] p {
+    margin: 4px;
+}
+
+div[class~="doc"] p[class~="doc-name"] {
+    font-weight: bold;
+}
+

@@ -52,4 +52,5 @@
            #:dfs
            #:dfs-map
 
-           #:edge-list-graph))
+           #:edge-list-graph
+           #:find-node))

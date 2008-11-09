@@ -1,4 +1,4 @@
-epigraph, a library for reading and writing TIFF files
+epigraph, a library for manipulating graphs in common lisp
 
 Copyright (c) 2008 Cyrus Harmon
 All rights reserved.

@@ -88,23 +88,25 @@
 
 (defgeneric bfs (graph start end &key key test)
   (:documentation "Performs a breadth-first-search on graph starting
-  at start and returns a path end if end is
-  reachable from start, otherwise returns NIL."))
+  at start and returns a path end if end is reachable from start,
+  otherwise returns NIL. [DOCUMENT KEY AND TEST ARGS PLEASE!]"))
 
 (defgeneric bfs-map (graph start fn &key end key test)
   (:documentation "Performs a breadth-first-search on graph starting
   at start until node end is found, if it is specified, calling fn, a
-  function of one argument, for  each node as it is found."))
+  function of one argument, for each node as it is found. [DOCUMENT
+  KEY AND TEST ARGS PLEASE!]"))
 
 (defgeneric dfs (graph start end &key key test)
-  (:documentation "Performs a depth-first-search on graph starting
-  at start and returns a path end if end is
-  reachable from start, otherwise returns NIL."))
+  (:documentation "Performs a depth-first-search on graph starting at
+  start and returns a path end if end is reachable from start,
+  otherwise returns NIL. [DOCUMENT KEY AND TEST ARGS PLEASE!]"))
 
 (defgeneric dfs-map (graph start fn &key end key test)
-  (:documentation "Performs a depth-first-search on graph starting
-  at start until node end is found, if it is specified, calling fn, a
-  function of one argument, for  each node as it is found."))
+  (:documentation "Performs a depth-first-search on graph starting at
+  start until node end is found, if it is specified, calling fn, a
+  function of one argument, for each node as it is found. [DOCUMENT
+  KEY AND TEST ARGS PLEASE!]"))
 
 ;; note that saved the path in bfs results in possible quadratic
 ;; storage for bfs. There's probably a better way to do this. The
@@ -208,7 +210,8 @@
 (defmethod copy-graph ((graph edge-list-graph))
   (let ((new (make-instance (class-of graph))))
     (setf (graph-nodes new) (graph-nodes graph)
-          (graph-edge-list new) (copy-tree (graph-edge-list graph)))))
+          (graph-edge-list new) (copy-tree (graph-edge-list graph)))
+    new))
 
 (defmethod add-edge ((graph edge-list-graph) (node1 node) (node2 node))
   (pushnew node1 (graph-nodes graph))
@@ -244,3 +247,12 @@
             (union (map (type-of edges) #'car edges)
                    (map (type-of edges) #'cdr edges)))))
 
+(defmethod find-node ((graph edge-list-graph) name
+                      &key (start (car (graph-nodes graph))))
+  (car
+   (nreverse
+    (dfs graph
+         start
+         name
+         :key #'node-name
+         :test 'equal))))
