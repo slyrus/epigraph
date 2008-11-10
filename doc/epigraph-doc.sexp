@@ -17,6 +17,7 @@
        graphs and for performing operations on the graphs, such as
        adding and removing nodes, adding and removing edges between
        the nodes, and various ways of searching the graph.")
+  (:h1 "Examples")
   (:h1 "Dictionary")
   (:h2 "Graphs")
   (:h2 "Nodes")))

@@ -43,13 +43,21 @@
   (print-unreadable-object (object stream :type t :identity t)
     (format stream "~S" (node-name object))))
 
+(defun make-node (name)
+  (make-instance 'node :name name))
+
 ;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
-  ((nodes :accessor graph-nodes :initarg :nodes :initform nil))
+  ()
   (:documentation "The protocol class of graphs. The intent is that
   there will be concrete subclasses of graph with different
   implementations of storing the nodes and edges."))
+
+(defparameter *default-graph-class* 'edge-list-graph)
+
+(defun make-graph (&optional (graph-class *default-graph-class*))
+  (make-instance graph-class))
 
 (defgeneric copy-graph (graph)
   (:documentation "Returns a copy of the graph which will contain
@@ -108,10 +116,6 @@
   function of one argument, for each node as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
-;; note that saved the path in bfs results in possible quadratic
-;; storage for bfs. There's probably a better way to do this. The
-;; good news is that the path can't be longer than the number of
-;; nodes, so it doesn't require exponential storage.
 (defmethod bfs ((graph graph) start end &key (key 'identity) (test 'eql))
   (let (visited)
     (labels
@@ -163,6 +167,47 @@
                (bfs-visit children)))))
       (bfs-visit (list start)))))
 
+(defclass bfs-node-data ()
+  ((visited :accessor visited :initarg :visited :initform nil)
+   (parent :accessor parent :initarg :parent)))
+
+;;;
+;;; the following function doesn't explicitly store the path back
+;;; from the node to the start, but rather stores the parent of each
+;;; node in a hashtable. I thought this would be a big win, but
+;;; through the magic of cons and sharing list structure, the original
+;;; version was actually quite efficient.
+(defmethod bfs2 ((graph graph) start end
+                 &key
+                 (key 'identity)
+                 (test 'eql))
+  (let ((visited-nodes (make-hash-table)))
+    (labels
+        ((walk-back (node)
+           (let ((parent (gethash node visited-nodes)))
+             (if parent
+                 (cons node (walk-back parent))
+                 (list node))))
+         (bfs-visit (nodes node-parents)
+           (let (children parents)
+             (map nil
+                  (lambda (node parent)
+                    (setf (gethash node visited-nodes) parent)
+                    (when (funcall test (funcall key node) end)
+                      (return-from bfs2
+                        (nreverse (walk-back node))))
+                    (let ((neighbors (neighbors graph node)))
+                      (map nil
+                           (lambda (x)
+                             (unless (nth-value 1 (gethash x visited-nodes))
+                               (push x children)
+                               (push node parents)))
+                           neighbors)))
+                  nodes node-parents)
+             (when children
+               (bfs-visit children parents)))))
+      (bfs-visit (list start) (list nil)))))
+
 (defmethod dfs ((graph graph) start end &key key test)
   (let ((visited (list start)))
     (labels ((dfs-visit (node path)
@@ -200,24 +245,69 @@
 ;;;
 ;;; edge list graph
 (defclass edge-list-graph (graph)
-  ((edges :accessor graph-edge-list :initarg :edges :initform nil))
+  ((node-hash :accessor graph-node-hash
+              :initarg :nodes
+              :initform (make-hash-table))
+   (node-name-hash :accessor graph-node-name-hash
+                   :initarg :nodes
+                   :initform (make-hash-table :test 'equal))
+   (edges :accessor graph-edge-list :initarg :edges :initform nil))
   (:documentation "A concrete subclass of graph that represents the
   edges in the graph with a list of edges between nodes."))
+
+(defmethod add-node ((graph edge-list-graph) (node node))
+  (unless (gethash node (graph-node-hash graph))
+    (progn
+      (setf (gethash node (graph-node-hash graph)) node)
+      (when (node-name node)
+        (setf (gethash (node-name node) (graph-node-name-hash graph)) node))))
+  node)
+
+(defmethod get-node ((graph edge-list-graph) (node node))
+  node)
+
+(defmethod get-node ((graph edge-list-graph) name)
+  (gethash name (graph-node-name-hash graph)))
+
+(defun find-node (graph node-identifier)
+  (typecase node-identifier
+    (node node-identifier)
+    (string (get-node graph node-identifier))))
+
+(defmacro with-graph-iterator ((function graph) &body body)
+  `(with-hash-table-iterator (,function (graph-node-hash ,graph))
+     ,@body))
+  
+(defmethod first-node ((graph edge-list-graph))
+  (with-graph-iterator (next-entry graph)
+    (nth-value 1 (next-entry))))
 
 (defmethod graph-edges ((graph edge-list-graph))
   (graph-edge-list graph))
 
 (defmethod copy-graph ((graph edge-list-graph))
   (let ((new (make-instance (class-of graph))))
-    (setf (graph-nodes new) (graph-nodes graph)
-          (graph-edge-list new) (copy-tree (graph-edge-list graph)))
+    (setf (graph-node-hash new)
+          (alexandria:copy-hash-table (graph-node-hash graph))
+          (graph-edge-list new)
+          (copy-tree (graph-edge-list graph)))
     new))
 
 (defmethod add-edge ((graph edge-list-graph) (node1 node) (node2 node))
-  (pushnew node1 (graph-nodes graph))
-  (pushnew node2 (graph-nodes graph))
+  (add-node graph node1)
+  (add-node graph node2)
   (let ((edge (cons node1 node2)))
     (pushnew edge (graph-edge-list graph) :test 'equalp)))
+
+(defmethod add-edge ((graph edge-list-graph)
+                     node-identifier-1
+                     node-identifier-2)
+  (let ((node1 (get-node graph node-identifier-1))
+        (node2 (get-node graph node-identifier-2)))
+    (add-node graph node1)
+    (add-node graph node2)
+    (let ((edge (cons node1 node2)))
+      (pushnew edge (graph-edge-list graph) :test 'equalp))))
 
 (defmethod remove-edge ((graph edge-list-graph) (node1 node) (node2 node))
   (let ((edge (cons node1 node2)))
@@ -247,12 +337,3 @@
             (union (map (type-of edges) #'car edges)
                    (map (type-of edges) #'cdr edges)))))
 
-(defmethod find-node ((graph edge-list-graph) name
-                      &key (start (car (graph-nodes graph))))
-  (car
-   (nreverse
-    (dfs graph
-         start
-         name
-         :key #'node-name
-         :test 'equal))))

@@ -34,9 +34,13 @@
   (:export #:node
            #:node-name
            #:node-data
-           
+           #:make-node
+
            #:graph
            #:graph-nodes
+           #:make-graph
+           #:*default-graph-class*
+
            #:copy-graph
            #:add-edge
            #:remove-edge
@@ -53,4 +57,6 @@
            #:dfs-map
 
            #:edge-list-graph
-           #:find-node))
+           #:add-node
+           #:get-node
+           #:first-node))
