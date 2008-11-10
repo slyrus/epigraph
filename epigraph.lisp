@@ -117,7 +117,7 @@
   KEY AND TEST ARGS PLEASE!]"))
 
 (defmethod bfs ((graph graph) start end &key (key 'identity) (test 'eql))
-  (let (visited)
+  (let ((visited-nodes (make-hash-table)))
     (labels
         ((bfs-visit (node-set-list)
            (let (children)
@@ -128,11 +128,11 @@
                       (when (funcall test (funcall key node) end)
                         (return-from bfs
                           (nreverse (cons node path))))
-                      (push node visited)
+                      (setf (gethash node visited-nodes) node)
                       (let ((neighbors (neighbors graph node)))
                         (map nil
                              (lambda (x)
-                               (unless (member x visited)
+                               (unless (gethash x visited-nodes)
                                  (push (cons x (cons node path)) children)))
                              neighbors))))
                   node-set-list)
@@ -145,7 +145,7 @@
                     (end nil end-supplied-p)
                     key
                     test)
-  (let (visited)
+  (let ((visited-nodes (make-hash-table)))
     (labels
         ((bfs-visit (node-list)
            (let (children)
@@ -155,21 +155,17 @@
                     (when (and end-supplied-p
                                (funcall test (funcall key node) end))
                       (return-from bfs-map))
-                    (push node visited)
+                    (setf (gethash node visited-nodes) node)
                     (let ((neighbors (neighbors graph node)))
                       (map nil
                            (lambda (x)
-                             (unless (member x visited)
+                             (unless (gethash x visited-nodes)
                                (push x children)))
                            neighbors)))
                   node-list)
              (when children
                (bfs-visit children)))))
       (bfs-visit (list start)))))
-
-(defclass bfs-node-data ()
-  ((visited :accessor visited :initarg :visited :initform nil)
-   (parent :accessor parent :initarg :parent)))
 
 ;;;
 ;;; the following function doesn't explicitly store the path back
