@@ -167,43 +167,6 @@
                (bfs-visit children)))))
       (bfs-visit (list start)))))
 
-;;;
-;;; the following function doesn't explicitly store the path back
-;;; from the node to the start, but rather stores the parent of each
-;;; node in a hashtable. I thought this would be a big win, but
-;;; through the magic of cons and sharing list structure, the original
-;;; version was actually quite efficient.
-(defmethod bfs2 ((graph graph) start end
-                 &key
-                 (key 'identity)
-                 (test 'eql))
-  (let ((visited-nodes (make-hash-table)))
-    (labels
-        ((walk-back (node)
-           (let ((parent (gethash node visited-nodes)))
-             (if parent
-                 (cons node (walk-back parent))
-                 (list node))))
-         (bfs-visit (nodes node-parents)
-           (let (children parents)
-             (map nil
-                  (lambda (node parent)
-                    (setf (gethash node visited-nodes) parent)
-                    (when (funcall test (funcall key node) end)
-                      (return-from bfs2
-                        (nreverse (walk-back node))))
-                    (let ((neighbors (neighbors graph node)))
-                      (map nil
-                           (lambda (x)
-                             (unless (nth-value 1 (gethash x visited-nodes))
-                               (push x children)
-                               (push node parents)))
-                           neighbors)))
-                  nodes node-parents)
-             (when children
-               (bfs-visit children parents)))))
-      (bfs-visit (list start) (list nil)))))
-
 (defmethod dfs ((graph graph) start end &key key test)
   (let ((visited (list start)))
     (labels ((dfs-visit (node path)
