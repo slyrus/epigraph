@@ -201,6 +201,82 @@
                       neighbors))))
       (dfs-visit start nil))))
 
+
+;;;
+;;; Alternative implementation of bfs and dfs, using a more general
+;;; graph-search routine and a q class that can accept new items at
+;;; either the head or the tail.
+(defclass q ()
+  ((items :accessor qitems :initform nil)
+   (last :accessor qlast :initform nil)))
+
+(defun makeq ()
+  (make-instance 'q))
+
+(defmethod qappend (q item)
+  (if (qitems q)
+      (setf (cdr (qlast q)) (list item)
+            (qlast q) (cdr (qlast q)))
+      (setf (qitems q) (list item)
+            (qlast q) (qitems q))))
+
+(defmethod qpush (q item)
+  (if (qitems q)
+      (push item (qitems q))
+      (setf (qitems q) (list item)
+            (qlast q) (qitems q))))
+
+(defmethod qpop (q)
+  (pop (qitems q)))
+
+(defmethod graph-search ((graph graph) start end
+                         &key
+                         (key 'identity)
+                         (test 'eql)
+                         (queueing-function 'qappend))
+  (let* ((visited-nodes (make-hash-table))
+         (search-nodes (makeq)))
+    (qappend search-nodes (cons start nil))
+    (labels
+        ((bfs-visit ()
+           (destructuring-bind (node . path)
+               (qpop search-nodes)
+             (when (funcall test (funcall key node) end)
+               (return-from graph-search
+                 (nreverse (cons node path))))
+             (setf (gethash node visited-nodes) node)
+             (let ((neighbors (neighbors graph node)))
+               (map nil
+                    (lambda (x)
+                      (unless (gethash x visited-nodes)
+                        (funcall queueing-function search-nodes
+                                 (cons x (cons node path)))))
+                    neighbors)))
+           (when (qitems search-nodes)
+             (bfs-visit))))
+      (bfs-visit))))
+
+(defmethod bfs2 ((graph graph) start end
+                 &key
+                 (key 'identity)
+                 (test 'eql))
+  (apply #'graph-search graph start end
+         :queueing-function 'qappend
+         (append
+          (when key `(:key ,key))
+          (when test `(:test ,test)))))
+
+(defmethod dfs2 ((graph graph) start end
+                 &key
+                 (key 'identity)
+                 (test 'eql))
+  (apply #'graph-search graph start end
+         :queueing-function 'qpush
+         (append
+          (when key `(:key ,key))
+          (when test `(:test ,test)))))
+
+
 ;;;
 ;;; edge list graph
 (defclass edge-list-graph (graph)
