@@ -47,12 +47,28 @@
   (make-instance 'node :name name))
 
 ;;;
+;;; edges
+(defclass edge ()
+  ((graph :accessor edge-graph :initarg :graph)
+   (node1 :accessor node1 :initarg :node1)
+   (node2 :accessor node2 :initarg :node1))
+  (:documentation "Instances of the edge class represent edges between
+  nodes in a graph."))
+
+;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
   ()
   (:documentation "The protocol class of graphs. The intent is that
   there will be concrete subclasses of graph with different
   implementations of storing the nodes and edges."))
+
+;;; should we define feature-rich subclasses of graph?
+;;; e.g.
+(defclass singly-connected-graph (graph) ())
+(defclass acyclic-graph (graph) ())
+(defclass undirected-graph (graph) ())
+(defclass digraph (graph) ())
 
 (defparameter *default-graph-class* 'edge-list-graph)
 
@@ -62,6 +78,9 @@
 (defgeneric copy-graph (graph)
   (:documentation "Returns a copy of the graph which will contain
   copies of the edges, but the same nodes as the original graph."))
+
+(defgeneric add-node (graph node)
+  (:documentation "Add a node to the graph."))
 
 (defgeneric add-edge (graph node1 node2)
   (:documentation "Adds an edge to the graph from node1 to node2."))
@@ -298,6 +317,9 @@
         (setf (gethash (node-name node) (graph-node-name-hash graph)) node))))
   node)
 
+(defmethod add-node ((graph edge-list-graph) (name string))
+  (add-node graph (make-node name)))
+
 (defmethod get-node ((graph edge-list-graph) (node node))
   node)
 
@@ -332,7 +354,7 @@
   (add-node graph node1)
   (add-node graph node2)
   (let ((edge (cons node1 node2)))
-    (pushnew edge (graph-edge-list graph) :test 'equalp)))
+    (push edge (graph-edge-list graph))))
 
 (defmethod add-edge ((graph edge-list-graph)
                      node-identifier-1
@@ -342,7 +364,7 @@
     (add-node graph node1)
     (add-node graph node2)
     (let ((edge (cons node1 node2)))
-      (pushnew edge (graph-edge-list graph) :test 'equalp))))
+      (push edge (graph-edge-list graph)))))
 
 (defmethod remove-edge ((graph edge-list-graph) (node1 node) (node2 node))
   (let ((edge (cons node1 node2)))
