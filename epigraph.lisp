@@ -418,7 +418,7 @@
     (when node
       (find-edges-to graph node))))
 
-(defmethod find-edges-containing ((graph edge-list-graph) node)
+(defmethod find-edges-containing ((graph edge-list-graph) (node node))
   (union (find-edges-from graph node)
          (find-edges-to graph node)))
 
