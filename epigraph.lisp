@@ -82,6 +82,8 @@
 (defgeneric add-node (graph node)
   (:documentation "Add a node to the graph."))
 
+(defgeneric get-node (graph identifier))
+
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
 
@@ -235,21 +237,24 @@
 (defun makeq ()
   (make-instance 'q))
 
-(defmethod qappend (q item)
-  (if (qitems q)
-      (setf (cdr (qlast q)) (list item)
-            (qlast q) (cdr (qlast q)))
-      (setf (qitems q) (list item)
-            (qlast q) (qitems q))))
+(defgeneric qappend (q item)
+  (:method (q item)
+    (if (qitems q)
+        (setf (cdr (qlast q)) (list item)
+              (qlast q) (cdr (qlast q)))
+        (setf (qitems q) (list item)
+              (qlast q) (qitems q)))))
 
-(defmethod qpush (q item)
-  (if (qitems q)
-      (push item (qitems q))
-      (setf (qitems q) (list item)
-            (qlast q) (qitems q))))
+(defgeneric qpush (q item)
+  (:method (q item)
+    (if (qitems q)
+        (push item (qitems q))
+        (setf (qitems q) (list item)
+              (qlast q) (qitems q)))))
 
-(defmethod qpop (q)
-  (pop (qitems q)))
+(defgeneric qpop (q)
+  (:method (q)
+    (pop (qitems q))))
 
 (defmethod graph-search ((graph graph) start end
                          &key
@@ -357,46 +362,73 @@
     new))
 
 (defmethod add-edge ((graph edge-list-graph) (node1 node) (node2 node))
-  (add-node graph node1)
-  (add-node graph node2)
+  (unless (graph-node-p graph node1)
+    (error "Node ~A not in graph ~A" node1 graph))
+  (unless (graph-node-p graph node2)
+    (error "Node ~A not in graph ~A" node2 graph))
   (let ((edge (cons node1 node2)))
     (push edge (graph-edge-list graph))))
 
 (defmethod add-edge ((graph edge-list-graph)
-                     node-identifier-1
-                     node-identifier-2)
+                     node-identifier-1 node-identifier-2)
   (let ((node1 (get-node graph node-identifier-1))
         (node2 (get-node graph node-identifier-2)))
-    (add-node graph node1)
-    (add-node graph node2)
-    (let ((edge (cons node1 node2)))
-      (push edge (graph-edge-list graph)))))
+    (when (and node1 node2)
+      (add-edge graph node1 node2))))
 
-(defmethod remove-edge ((graph edge-list-graph) (node1 node) (node2 node))
+(defmethod remove-edge ((graph edge-list-graph)
+                        (node1 node) (node2 node))
   (let ((edge (cons node1 node2)))
     (setf (graph-edge-list graph)
           (remove edge (graph-edge-list graph) :test 'equalp))))
 
+(defmethod remove-edge ((graph edge-list-graph)
+                        node-identifier-1 node-identifier-2)
+  (let ((node1 (get-node graph node-identifier-1))
+        (node2 (get-node graph node-identifier-2)))
+    (when (and node1 node2)
+      (remove-edge graph node1 node2))))
+
 (defmethod edgep ((graph edge-list-graph) (node1 node) (node2 node))
   (find (cons node1 node2) (graph-edges graph) :test 'equalp))
 
-(defmethod find-edges-from ((graph edge-list-graph) node)
+(defmethod edgep ((graph edge-list-graph)
+                  node-identifier-1 node-identifier-2)
+  (let ((node1 (get-node graph node-identifier-1))
+        (node2 (get-node graph node-identifier-2)))
+    (when (and node1 node2) (edgep graph node1 node2))))
+
+(defmethod find-edges-from ((graph edge-list-graph) (node node))
   (remove-if-not (lambda (x)
                    (eq node x))
                  (graph-edges graph) :key #'car))
 
-(defmethod find-edges-to ((graph edge-list-graph) node)
+(defmethod find-edges-from ((graph edge-list-graph) node-identifier)
+  (let ((node (get-node graph node-identifier)))
+    (when node
+      (find-edges-from graph node))))
+
+(defmethod find-edges-to ((graph edge-list-graph) (node node))
   (remove-if-not (lambda (x)
                    (eq node x))
                  (graph-edges graph) :key #'cdr))
+
+(defmethod find-edges-to ((graph edge-list-graph) node-identifier)
+  (let ((node (get-node graph node-identifier)))
+    (when node
+      (find-edges-to graph node))))
 
 (defmethod find-edges-containing ((graph edge-list-graph) node)
   (union (find-edges-from graph node)
          (find-edges-to graph node)))
 
+(defmethod find-edges-containing ((graph edge-list-graph) node-identifier)
+  (let ((node (get-node graph node-identifier)))
+    (when node
+      (find-edges-containing graph node))))
+
 (defmethod neighbors (graph element) 
   (let ((edges (find-edges-containing graph element)))
-    (remove element
-            (union (map (type-of edges) #'car edges)
-                   (map (type-of edges) #'cdr edges)))))
+    (union (map (type-of edges) #'car edges)
+           (map (type-of edges) #'cdr edges))))
 

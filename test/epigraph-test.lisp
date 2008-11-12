@@ -33,14 +33,15 @@
 (defparameter *node* (make-instance 'node :name "test node 1"))
 (print *node*)
 
-(defparameter *graph* (make-graph))
-
-(let ((n1 (make-node "n1"))
-      (n2 (make-node "n2")))
-  (add-edge *graph* n1 n2))
-
-(add-edge *graph* "n2" (make-node "n3"))
-(add-edge *graph* (make-node "n3") (make-node "n4"))
+(defparameter *graph* 
+  (let ((g (make-graph)))
+    (let ((n1 (add-node g "n1"))
+          (n2 (add-node g "n2")))
+      (add-edge g n1 n2)
+      (add-node g "n3")
+      (add-edge g "n2" "n3")
+      (add-edge g "n3" (add-node g "n4")))
+    g))
 
 (defparameter *graph-copy* (copy-graph *graph*))
 

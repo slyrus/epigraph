@@ -1,0 +1,37 @@
+
+
+graphs:
+
+Ok, it's probably easier to go ahead and write my own graph library
+than to try to use something off the shelf, like cl-graph.
+
+But, this means I've some decisions to make. How do we represent
+ndoes, edges, etc???
+
+Let's have a protocol class of graph that implementation classes can
+subclass. The obvious represenation for edges are an edge list, an
+adjaceny list, and an adjacency matrix. Each implementation has
+strengths and weaknesses, which we won't get into here.
+
+For the moment, let's implement the edge-list-graph first and leave
+the other graphs for later. Molecules aren't likely to be densely
+connected, so the edge-list graph should be fine forthe moment.
+
+What about edges?
+
+Do we support both directed and undirected edges? Should this be per
+graph or per edge?
+
+Do we support self-edges?
+
+Do we support multiple edges between the same nodes?
+
+graph algorithms:
+
+* breadth-first search
+* depth-first search
+
+For the search algorithms we probably want multiple flavors, including
+one that returns the path found by search algorithm and one that calls
+a function for each searched node.
+
