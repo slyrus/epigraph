@@ -82,6 +82,9 @@
 (defgeneric add-node (graph node)
   (:documentation "Add a node to the graph."))
 
+(defgeneric graph-node-p (graph node)
+  (:documentation "Returns t if node is a node in graph."))
+
 (defgeneric add-edge (graph node1 node2)
   (:documentation "Adds an edge to the graph from node1 to node2."))
 
@@ -309,8 +312,11 @@
   (:documentation "A concrete subclass of graph that represents the
   edges in the graph with a list of edges between nodes."))
 
+(defmethod graph-node-p ((graph edge-list-graph) (node node))
+  (gethash node (graph-node-hash graph)))
+
 (defmethod add-node ((graph edge-list-graph) (node node))
-  (unless (gethash node (graph-node-hash graph))
+  (unless (graph-node-p graph node)
     (progn
       (setf (gethash node (graph-node-hash graph)) node)
       (when (node-name node)
