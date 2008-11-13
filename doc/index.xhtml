@@ -1,67 +1,55 @@
-((:smarkup-metadata
-  (:copyright
-   "Copyright 2008, Cyrus Harmon. All Rights Reserved. See COPYRIGHT
-  file for details")
-  (:title "epigraph  A library for representing and processing graphs,
-  nodges and edges.")
-  (:author "Cyrus L. Harmon"))
- (:html-metadata (:htmlcss "simple.css") )
- 
- (:span
-  (:title "Epigraph")
-  (:p "Epigraph is relatively simple, small, and, hopefully,
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><div class="title">Epigraph</div>
+<link rel="stylesheet" type="text/css" href="simple.css"/></head>
+<body><span><div class="title">Epigraph</div>
+<p>Epigraph is relatively simple, small, and, hopefully,
        lightweight package for representing graphs in common lisp. A
        graph, in the computer science sense, not the visualization of
        points, lines, etc... in a cartesian coordinate system, is a
        set of ndoes of edges. Epigraph is designed for representing
        graphs and for performing operations on the graphs, such as
        adding and removing nodes, adding and removing edges between
-       the nodes, and various ways of searching the graph.")
-  (:h1 "Examples")
-
-  (:h1 "Dictionary")
-
-  (:h2 "Nodes")
-
-  (:p "Instances of the class " (:code "NODE") " are relatively simple
+       the nodes, and various ways of searching the graph.</p>
+<h1>Examples</h1>
+<h1>Dictionary</h1>
+<h2>Nodes</h2>
+<p>Instances of the class <code>NODE</code>
+ are relatively simple
   objects that have a (presumably unique, let's discuss this later,
   and presumably, at some point, every node will have to have a
   non-nil name, but we are not enforcing that at the moment. In
   addition, each node has a data slot for associating arbitrary data
-  with the node.")
-
-  (:pre
-   (:code
-    #q{(defclass node ()
+  with the node.</p>
+<pre><code>(defclass node ()
   ((name :accessor node-name :initarg :name :initform nil)
    (data :accessor node-data :initarg :data :initform nil))
   (:documentation "A simple class for representing nodes in a graph,
   which will consist of a set of nodes, and a set of edges between the
-  nodes."))}))
-
-  (:h2 "Edges")
-  
-  (:p "Edges connect two nodes in a graph. Currently, edges are just
-  represented by simple " (:code "CONS") "es, and know nothing about
+  nodes."))</code>
+</pre>
+<h2>Edges</h2>
+<p>Edges connect two nodes in a graph. Currently, edges are just
+  represented by simple <code>CONS</code>
+es, and know nothing about
   the graph in which they are found, nor do they have any knowledge of
-  the \"type\" of edge they represent, such as directed, undirected,
-  etc...")
-  
-  (:pre
-   (:code
-    #q{(defclass edge ()
+  the "type" of edge they represent, such as directed, undirected,
+  etc...</p>
+<pre><code>(defclass edge ()
   ((graph :accessor edge-graph :initarg :graph)
    (node1 :accessor node1 :initarg :node1)
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
   (:documentation "Instances of the edge class represent edges between
-  nodes in a graph."))}))
-
-  (:h2 "Graphs")
-
-  (:p "Graphs contain nodes and edges. In order for a graph to
+  nodes in a graph."))</code>
+</pre>
+<h2>Graphs</h2>
+<p>Graphs contain nodes and edges. In order for a graph to
   represent its nodes and edges, it needs some way of associating the
   nodes and edges with the graph. Since nodes know nothing about the
   edges and graph(s) containing them, we must use the graph itself to
-  represent this data.")
-  ))
+  represent this data.</p>
+</span>
+</body>
+</html>
