@@ -35,3 +35,7 @@ For the search algorithms we probably want multiple flavors, including
 one that returns the path found by search algorithm and one that calls
 a function for each searched node.
 
+TODO:
+
+1. add-edge (and friends) -> add-edge-between-nodes
+2. add-edge (and friends) that take an edge instead of 2 nodes

@@ -56,7 +56,7 @@
            #:dfs
            #:dfs-map
 
-           #:edge-list-graph
+           #:simple-edge-list-graph
            #:add-node
            #:get-node
            #:first-node))
