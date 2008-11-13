@@ -36,6 +36,12 @@
            #:node-data
            #:make-node
 
+           #:edge
+           #:node1
+           #:node2
+           #:edge-data
+           #:*default-edge-class*
+           
            #:graph
            #:graph-nodes
            #:make-graph

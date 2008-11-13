@@ -77,6 +77,7 @@
 (defclass digraph (graph) ())
 
 (defparameter *default-graph-class* 'simple-edge-list-graph)
+(defparameter *default-edge-class* 'edge)
 
 (defun make-graph (&optional (graph-class *default-graph-class*))
   (make-instance graph-class))
@@ -93,7 +94,7 @@
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
 
-(defgeneric add-edge (graph node1 node2)
+(defgeneric add-edge (graph node1 node2 &key edge-class)
   (:documentation "Adds an edge to the graph from node1 to node2."))
 
 (defgeneric remove-edge (graph node1 node2)
@@ -367,7 +368,7 @@
           (alexandria:copy-hash-table (graph-node-name-hash graph))
           (graph-edge-list new)
           (loop for edge in (graph-edge-list graph)
-             collect (make-instance 'edge
+             collect (make-instance (class-of edge)
                                     :graph new
                                     :node1 (node1 edge)
                                     :node2 (node2 edge)
@@ -375,23 +376,26 @@
     
     new))
 
-(defmethod add-edge ((graph simple-edge-list-graph) (node1 node) (node2 node))
+(defmethod add-edge ((graph simple-edge-list-graph) (node1 node) (node2 node)
+                     &key (edge-class *default-edge-class*))
   (unless (graph-node-p graph node1)
     (error "Node ~A not in graph ~A" node1 graph))
   (unless (graph-node-p graph node2)
     (error "Node ~A not in graph ~A" node2 graph))
-  (let ((edge (make-instance 'edge
+  (let ((edge (make-instance edge-class
                              :graph graph
                              :node1 node1
                              :node2 node2)))
     (push edge (graph-edge-list graph))))
 
 (defmethod add-edge ((graph simple-edge-list-graph)
-                     node-identifier-1 node-identifier-2)
+                     node-identifier-1 node-identifier-2
+                     &key edge-class)
   (let ((node1 (get-node graph node-identifier-1))
         (node2 (get-node graph node-identifier-2)))
     (when (and node1 node2)
-      (add-edge graph node1 node2))))
+      (apply #'add-edge graph node1 node2
+             (when edge-class `(:edge-class ,edge-class))))))
 
 (defmethod remove-edge ((graph simple-edge-list-graph)
                         (node1 node) (node2 node))
