@@ -37,10 +37,10 @@
   (let ((g (make-graph)))
     (let ((n1 (add-node g "n1"))
           (n2 (add-node g "n2")))
-      (add-edge g n1 n2)
+      (add-edge-between-nodes g n1 n2)
       (add-node g "n3")
-      (add-edge g "n2" "n3")
-      (add-edge g "n3" (add-node g "n4")))
+      (add-edge-between-nodes g "n2" "n3")
+      (add-edge-between-nodes g "n3" (add-node g "n4")))
     g))
 
 (defparameter *graph-copy* (copy-graph *graph*))
@@ -52,13 +52,13 @@
   (loop for i below 500
      do (add-node *big-graph* (epigraph::make-node (princ-to-string i))))
   (loop for i below 499
-     do (add-edge *big-graph* (princ-to-string i) (princ-to-string (1+ i))))
+     do (add-edge-between-nodes *big-graph* (princ-to-string i) (princ-to-string (1+ i))))
   (loop for i below 6000
      for j = (random 500)
      for k  = (random 500)
      do 
        #+nil (print (cons j k))
-       (add-edge *big-graph* (princ-to-string j) (princ-to-string k))))
+       (add-edge-between-nodes *big-graph* (princ-to-string j) (princ-to-string k))))
 
 (test-me)
 

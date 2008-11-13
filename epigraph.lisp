@@ -61,6 +61,7 @@
     (format stream "~S ~S"
             (node1 object)
             (node2 object))))
+
 ;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
@@ -94,8 +95,12 @@
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
 
-(defgeneric add-edge (graph node1 node2 &key edge-class)
-  (:documentation "Adds an edge to the graph from node1 to node2."))
+(defgeneric add-edge (graph edge)
+  (:documentation "Adds an edge to the graph."))
+
+(defgeneric add-edge-between-nodes (graph node1 node2 &key edge-class)
+  (:documentation "Creates a node from node1 to node2 and adds it to
+  the graph.."))
 
 (defgeneric remove-edge (graph node1 node2)
   (:documentation "Removes the edge from node1 to node2 in the
@@ -376,8 +381,16 @@
     
     new))
 
-(defmethod add-edge ((graph simple-edge-list-graph) (node1 node) (node2 node)
-                     &key (edge-class *default-edge-class*))
+(defmethod add-edge ((graph simple-edge-list-graph) (edge edge))
+  (unless (graph-node-p graph (node1 edge))
+    (error "Node ~A not in graph ~A" (node1 edge) graph))
+  (unless (graph-node-p graph (node2 edge))
+    (error "Node ~A not in graph ~A" (node2 edge) graph))
+  (push edge (graph-edge-list graph)))
+
+(defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
+                                   (node1 node) (node2 node)
+                                   &key (edge-class *default-edge-class*))
   (unless (graph-node-p graph node1)
     (error "Node ~A not in graph ~A" node1 graph))
   (unless (graph-node-p graph node2)
@@ -388,9 +401,9 @@
                              :node2 node2)))
     (push edge (graph-edge-list graph))))
 
-(defmethod add-edge ((graph simple-edge-list-graph)
-                     node-identifier-1 node-identifier-2
-                     &key edge-class)
+(defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
+                                   node-identifier-1 node-identifier-2
+                                   &key edge-class)
   (let ((node1 (get-node graph node-identifier-1))
         (node2 (get-node graph node-identifier-2)))
     (when (and node1 node2)
