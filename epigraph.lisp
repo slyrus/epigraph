@@ -39,9 +39,13 @@
   which will consist of a set of nodes, and a set of edges between the
   nodes."))
 
+(defgeneric print-node-data (object stream)
+  (:method ((object node) stream)
+    (format stream "~S" (node-name object))))
+
 (defmethod print-object ((object node) stream)
   (print-unreadable-object (object stream :type t :identity t)
-    (format stream "~S" (node-name object))))
+    (print-node-data object stream)))
 
 (defun make-node (name)
   (make-instance 'node :name name))
@@ -56,11 +60,15 @@
   (:documentation "Instances of the edge class represent edges between
   nodes in a graph."))
 
-(defmethod print-object ((object edge) stream)
-  (print-unreadable-object (object stream :type t :identity t)
+(defgeneric print-edge-data (object stream)
+  (:method ((object edge) stream)
     (format stream "~S ~S"
             (node1 object)
             (node2 object))))
+
+(defmethod print-object ((object edge) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (print-edge-data object stream)))
 
 ;;;
 ;;; graphs and generic functions for operating on graphs
@@ -94,6 +102,9 @@
 
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
+
+(defgeneric node-count (graph)
+  (:documentation "Returns the number of nodes in graph."))
 
 (defgeneric add-edge (graph edge)
   (:documentation "Adds an edge to the graph."))
@@ -331,6 +342,9 @@
 
 (defmethod graph-node-p ((graph simple-edge-list-graph) (node node))
   (gethash node (graph-node-hash graph)))
+
+(defmethod node-count ((graph simple-edge-list-graph))
+  (hash-table-count (graph-node-hash graph)))
 
 (defmethod add-node ((graph simple-edge-list-graph) (node node))
   (unless (graph-node-p graph node)

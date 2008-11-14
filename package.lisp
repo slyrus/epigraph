@@ -35,18 +35,23 @@
            #:node-name
            #:node-data
            #:make-node
+           #:print-node-data
 
            #:edge
            #:node1
            #:node2
            #:edge-data
            #:*default-edge-class*
+           #:print-edge-data
            
            #:graph
            #:graph-nodes
            #:make-graph
            #:*default-graph-class*
 
+           #:add-node
+           #:get-node
+           #:node-count
            #:copy-graph
            #:add-edge
            #:remove-edge
@@ -63,6 +68,4 @@
            #:dfs-map
 
            #:simple-edge-list-graph
-           #:add-node
-           #:get-node
            #:first-node))
