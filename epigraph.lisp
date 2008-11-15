@@ -41,13 +41,18 @@
 
 (defgeneric print-node-data (object stream)
   (:method ((object node) stream)
-    (format stream "~S" (node-name object))))
+    (format stream "~S" (node-name object)))
+  (:documentation "Prints data about a given node. This function is
+  called from the print-object method specialied on NODE objects. To
+  add additional data to be printed by subclasses of node, create
+  an :AFTER method on PRINT-NODE-DATA."))
 
 (defmethod print-object ((object node) stream)
   (print-unreadable-object (object stream :type t :identity t)
     (print-node-data object stream)))
 
 (defun make-node (name)
+  "Creates in instance of the NODE class with the specified name."
   (make-instance 'node :name name))
 
 ;;;
@@ -57,14 +62,18 @@
    (node1 :accessor node1 :initarg :node1)
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
-  (:documentation "Instances of the edge class represent edges between
+  (:documentation "Instances of the EDGE class represent edges between
   nodes in a graph."))
 
 (defgeneric print-edge-data (object stream)
   (:method ((object edge) stream)
     (format stream "~S ~S"
             (node1 object)
-            (node2 object))))
+            (node2 object)))
+  (:documentation "Prints data about a given edge. This function is
+  called from the print-object method specialied on EDGE objects. To
+  add additional data to be printed by subclasses of edge create
+  an :AFTER method on PRINT-EDGE-DATA."))
 
 (defmethod print-object ((object edge) stream)
   (print-unreadable-object (object stream :type t :identity t)
@@ -75,7 +84,7 @@
 (defclass graph ()
   ()
   (:documentation "The protocol class of graphs. The intent is that
-  there will be concrete subclasses of graph with different
+  there will be concrete subclasses of GRAPH with different
   implementations of storing the nodes and edges."))
 
 ;;; should we define feature-rich subclasses of graph?
@@ -89,6 +98,8 @@
 (defparameter *default-edge-class* 'edge)
 
 (defun make-graph (&optional (graph-class *default-graph-class*))
+  "Creates a GRAPH instance whose actual class will either be
+specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (make-instance graph-class))
 
 (defgeneric copy-graph (graph)
@@ -140,6 +151,10 @@
 (defgeneric neighbors (graph node)
   (:documentation "Returns a list of the nodes that are connected to
   node."))
+
+(defgeneric map-nodes (graph fn)
+  (:documentation "Calls FN on every node in the graph, without regard
+  to the configuration of the graph."))
 
 (defgeneric bfs (graph start end &key key test)
   (:documentation "Performs a breadth-first-search on graph starting
@@ -375,6 +390,20 @@
 (defmethod first-node ((graph simple-edge-list-graph))
   (with-graph-iterator (next-entry graph)
     (nth-value 1 (next-entry))))
+
+(defmethod graph-nodes ((graph simple-edge-list-graph))
+  (let (l)
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (push k l))
+             (graph-node-hash graph))
+    l))
+
+(defmethod map-nodes ((graph simple-edge-list-graph) fn)
+  (maphash (lambda (k v)
+             (declare (ignore v))
+             (funcall fn k))
+           (graph-node-hash graph)))
 
 (defmethod graph-edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))

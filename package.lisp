@@ -62,6 +62,8 @@
            #:find-edges-containing
            #:neighbors
            
+           #:map-nodes
+
            #:bfs
            #:bfs-map
            #:dfs
