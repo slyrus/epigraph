@@ -31,13 +31,7 @@
 (cl:defpackage #:epigraph
   (:use #:cl)
   (:nicknames #:graph)
-  (:export #:node
-           #:node-name
-           #:node-data
-           #:make-node
-           #:print-node-data
-
-           #:edge
+  (:export #:edge
            #:node1
            #:node2
            #:edge-data
