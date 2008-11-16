@@ -31,31 +31,6 @@
 (in-package :epigraph)
 
 ;;;
-;;; nodes
-(defclass node ()
-  ((name :accessor node-name :initarg :name :initform nil)
-   (data :accessor node-data :initarg :data :initform nil))
-  (:documentation "A simple class for representing nodes in a graph,
-  which will consist of a set of nodes, and a set of edges between the
-  nodes."))
-
-(defgeneric print-node-data (object stream)
-  (:method ((object node) stream)
-    (format stream "~S" (node-name object)))
-  (:documentation "Prints data about a given node. This function is
-  called from the print-object method specialied on NODE objects. To
-  add additional data to be printed by subclasses of node, create
-  an :AFTER method on PRINT-NODE-DATA."))
-
-(defmethod print-object ((object node) stream)
-  (print-unreadable-object (object stream :type t :identity t)
-    (print-node-data object stream)))
-
-(defun make-node (name)
-  "Creates in instance of the NODE class with the specified name."
-  (make-instance 'node :name name))
-
-;;;
 ;;; edges
 (defclass edge ()
   ((graph :accessor edge-graph :initarg :graph)
@@ -108,8 +83,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defgeneric add-node (graph node)
   (:documentation "Add a node to the graph."))
-
-(defgeneric get-node (graph identifier))
 
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
@@ -263,7 +236,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                       neighbors))))
       (dfs-visit start nil))))
 
-
 ;;;
 ;;; Alternative implementation of bfs and dfs, using a more general
 ;;; graph-search routine and a q class that can accept new items at
@@ -347,41 +319,22 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defclass simple-edge-list-graph (graph)
   ((node-hash :accessor graph-node-hash
               :initarg :nodes
-              :initform (make-hash-table))
-   (node-name-hash :accessor graph-node-name-hash
-                   :initarg :nodes
-                   :initform (make-hash-table :test 'equal))
+              :initform (make-hash-table :test 'equal))
    (edges :accessor graph-edge-list :initarg :edges :initform nil))
   (:documentation "A concrete subclass of graph that represents the
   edges in the graph with a list of edges between nodes."))
 
-(defmethod graph-node-p ((graph simple-edge-list-graph) (node node))
+(defmethod graph-node-p ((graph simple-edge-list-graph) node)
   (gethash node (graph-node-hash graph)))
 
 (defmethod node-count ((graph simple-edge-list-graph))
   (hash-table-count (graph-node-hash graph)))
 
-(defmethod add-node ((graph simple-edge-list-graph) (node node))
+(defmethod add-node ((graph simple-edge-list-graph) node)
   (unless (graph-node-p graph node)
     (progn
-      (setf (gethash node (graph-node-hash graph)) node)
-      (when (node-name node)
-        (setf (gethash (node-name node) (graph-node-name-hash graph)) node))))
+      (setf (gethash node (graph-node-hash graph)) node)))
   node)
-
-(defmethod add-node ((graph simple-edge-list-graph) (name string))
-  (add-node graph (make-node name)))
-
-(defmethod get-node ((graph simple-edge-list-graph) (node node))
-  node)
-
-(defmethod get-node ((graph simple-edge-list-graph) name)
-  (gethash name (graph-node-name-hash graph)))
-
-(defun find-node (graph node-identifier)
-  (typecase node-identifier
-    (node node-identifier)
-    (string (get-node graph node-identifier))))
 
 (defmacro with-graph-iterator ((function graph) &body body)
   `(with-hash-table-iterator (,function (graph-node-hash ,graph))
@@ -412,8 +365,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (let ((new (make-instance (class-of graph))))
     (setf (graph-node-hash new)
           (alexandria:copy-hash-table (graph-node-hash graph))
-          (graph-node-name-hash new)
-          (alexandria:copy-hash-table (graph-node-name-hash graph))
           (graph-edge-list new)
           (loop for edge in (graph-edge-list graph)
              collect (make-instance (class-of edge)
@@ -432,7 +383,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (push edge (graph-edge-list graph)))
 
 (defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
-                                   (node1 node) (node2 node)
+                                   node1 node2
                                    &key (edge-class *default-edge-class*))
   (unless (graph-node-p graph node1)
     (error "Node ~A not in graph ~A" node1 graph))
@@ -444,17 +395,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                              :node2 node2)))
     (push edge (graph-edge-list graph))))
 
-(defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
-                                   node-identifier-1 node-identifier-2
-                                   &key edge-class)
-  (let ((node1 (get-node graph node-identifier-1))
-        (node2 (get-node graph node-identifier-2)))
-    (when (and node1 node2)
-      (apply #'add-edge graph node1 node2
-             (when edge-class `(:edge-class ,edge-class))))))
-
 (defmethod remove-edge ((graph simple-edge-list-graph)
-                        (node1 node) (node2 node))
+                        node1 node2)
   (let ((edge (cons node1 node2)))
     (setf (graph-edge-list graph)
           (remove edge
@@ -463,54 +405,26 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                          (cons (node1 x) (node2 x)))
                   :test 'equalp))))
 
-(defmethod remove-edge ((graph simple-edge-list-graph)
-                        node-identifier-1 node-identifier-2)
-  (let ((node1 (get-node graph node-identifier-1))
-        (node2 (get-node graph node-identifier-2)))
-    (when (and node1 node2)
-      (remove-edge graph node1 node2))))
-
-(defmethod edgep ((graph simple-edge-list-graph) (node1 node) (node2 node))
+(defmethod edgep ((graph simple-edge-list-graph) node1 node2)
   (find (cons node1 node2)
         (graph-edges graph)
         :key (lambda (x)
                (cons (node1 x) (node2 x)))
         :test 'equalp))
 
-(defmethod edgep ((graph simple-edge-list-graph)
-                  node-identifier-1 node-identifier-2)
-  (let ((node1 (get-node graph node-identifier-1))
-        (node2 (get-node graph node-identifier-2)))
-    (when (and node1 node2) (edgep graph node1 node2))))
-
-(defmethod find-edges-from ((graph simple-edge-list-graph) (node node))
+(defmethod find-edges-from ((graph simple-edge-list-graph) node)
   (remove-if-not (lambda (x)
                    (eq node x))
                  (graph-edges graph) :key #'node1))
 
-(defmethod find-edges-from ((graph simple-edge-list-graph) node-identifier)
-  (let ((node (get-node graph node-identifier)))
-    (when node
-      (find-edges-from graph node))))
-
-(defmethod find-edges-to ((graph simple-edge-list-graph) (node node))
+(defmethod find-edges-to ((graph simple-edge-list-graph) node)
   (remove-if-not (lambda (x)
                    (eq node x))
                  (graph-edges graph) :key #'node2))
 
-(defmethod find-edges-to ((graph simple-edge-list-graph) node-identifier)
-  (let ((node (get-node graph node-identifier)))
-    (when node
-      (find-edges-to graph node))))
-
-(defmethod find-edges-containing ((graph simple-edge-list-graph) (node node))
+(defmethod find-edges-containing ((graph simple-edge-list-graph) node)
   (union (find-edges-from graph node)
          (find-edges-to graph node)))
-
-(defmethod find-edges-containing ((graph simple-edge-list-graph) node-identifier)
-  (let ((node (get-node graph node-identifier)))
-    (when node
-      (find-edges-containing graph node))))
 
 (defmethod neighbors (graph element) 
   (let ((edges (find-edges-containing graph element)))
