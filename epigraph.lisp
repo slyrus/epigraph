@@ -514,6 +514,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod neighbors (graph element) 
   (let ((edges (find-edges-containing graph element)))
-    (union (map (type-of edges) #'node1 edges)
-           (map (type-of edges) #'node2 edges))))
+    (remove element
+            (union (map (type-of edges) #'node1 edges)
+                   (map (type-of edges) #'node2 edges)))))
 
