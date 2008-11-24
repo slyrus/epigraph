@@ -478,6 +478,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defun find-cycle (graph
                    &key (start (first-node graph))
                    (test (graph-node-test graph)))
+  "Finds a cycle in graph, if one exists, using depth-first-search and
+returns two VALUES, the edge that completes the cycle, and the path
+from the start of the cycle back to the first node in the cycle."
   (let ((traversed-edges (make-hash-table))
         (visited-nodes (make-hash-table :test test)))
     (labels ((visit (node path)
@@ -495,20 +498,22 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                                               (node1 edge))))
                             (when (gethash neighbor visited-nodes)
                               (return-from find-cycle
-                                (values (member neighbor
+                                (values edge
+                                        (member neighbor
                                                 (nreverse (cons node path))
-                                                :test test)
-                                        edge)))
+                                                :test test))))
                             (visit neighbor (cons node path)))))
                       edges))))
       (visit start nil))))
 
 (defun find-cycles (graph &key (start (first-node graph)))
+  "Finds all of the cycles in a graph and returns two VALUEs, the list
+of the edges that make complete the cycles, and a copy of GRAPH, with
+the cycle-forming edges removed."
   (let ((graph (copy-graph graph))
         (cycle-edges))
-    (loop for edge = (nth-value 1
-                                (apply 'find-cycle graph
-                                       (when start `(:start ,start))))
+    (loop for edge = (apply 'find-cycle graph
+                            (when start `(:start ,start)))
        while edge
        do
          (push edge cycle-edges)
