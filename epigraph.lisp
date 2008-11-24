@@ -97,7 +97,10 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Creates a node from node1 to node2 and adds it to
   the graph.."))
 
-(defgeneric remove-edge (graph node1 node2)
+(defgeneric remove-edge (graph edge &key test)
+  (:documentation "Removes edge from the graph."))
+
+(defgeneric remove-edge-between-nodes (graph node1 node2)
   (:documentation "Removes the edge from node1 to node2 in the
   graph."))
 
@@ -157,8 +160,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod bfs ((graph graph) start end
                 &key (key 'identity) (test (graph-node-test graph)))
-  (declare (optimize (debug 2)))
-  (let ((visited-nodes (make-hash-table)))
+  (let ((visited-nodes (make-hash-table :test test)))
     (labels
         ((bfs-visit (node-set-list)
            (let (children)
@@ -186,7 +188,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                     (end nil end-supplied-p)
                     (key 'identity)
                     (test (graph-node-test graph)))
-  (let ((visited-nodes (make-hash-table)))
+  (let ((visited-nodes (make-hash-table :test test)))
     (labels
         ((bfs-visit (node-list)
            (let (children)
@@ -212,41 +214,43 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                 &key
                 (key 'identity)
                 (test (graph-node-test graph)))
-  (declare (optimize (debug 2)))
-  (let ((visited (list start)))
+  (let ((visited-nodes (make-hash-table :test test)))
     (labels ((dfs-visit (node path)
-               (if (funcall test
+               (when (funcall test
                             (funcall key node)
                             end)
-                   (return-from dfs (nreverse (cons node path)))
-                   (let ((neighbors (neighbors graph node)))
-                     (map nil
-                          (lambda (x)
-                            (unless (member x visited :test test)
-                              (push x visited)
-                              (dfs-visit x (cons node path))))
-                          neighbors)))))
+                 (return-from dfs (nreverse (cons node path))))
+               (setf (gethash node visited-nodes) node)
+               (let ((neighbors (neighbors graph node)))
+                 (map nil
+                      (lambda (x)
+                        (unless (gethash x visited-nodes)                              
+                          (dfs-visit x (cons node path))))
+                      neighbors))))
       (dfs-visit start nil))))
+
+(defparameter *dfs-depth* nil)
 
 (defmethod dfs-map ((graph graph) start fn
                     &key
                     (end nil end-supplied-p)
-                    (visit-start nil)
                     (key 'identity)
                     (test (graph-node-test graph)))
-  (let ((visited (list (unless visit-start start))))
+  (let ((visited-nodes (make-hash-table :test test))
+        (*dfs-depth* 0))
     (labels ((dfs-visit (node path)
-               (funcall fn node)
-               (when (and end-supplied-p
-                          (funcall test (funcall key node) end))
-                 (return-from dfs-map))
-               (let ((neighbors (neighbors graph node)))
-                 (map nil
-                      (lambda (x)
-                        (unless (member x visited)
-                          (push x visited)
-                          (dfs-visit x (cons node path))))
-                      neighbors))))
+               (let ((*dfs-depth* (1+ *dfs-depth*)))
+                 (funcall fn node)
+                 (when (and end-supplied-p
+                            (funcall test (funcall key node) end))
+                   (return-from dfs-map))
+                 (setf (gethash node visited-nodes) node)
+                 (let ((neighbors (neighbors graph node)))
+                   (map nil
+                        (lambda (x)
+                          (unless (gethash x visited-nodes)
+                            (dfs-visit x (cons node path))))
+                        neighbors)))))
       (dfs-visit start nil))))
 
 ;;;
@@ -282,9 +286,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod graph-search ((graph graph) start end
                          &key
                          (key 'identity)
-                         (test 'eql)
+                         (test (graph-node-test graph))
                          (queueing-function 'qappend))
-  (let* ((visited-nodes (make-hash-table))
+  (let* ((visited-nodes (make-hash-table :test test))
          (search-nodes (makeq)))
     (qappend search-nodes (cons start nil))
     (labels
@@ -309,7 +313,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod bfs2 ((graph graph) start end
                  &key
                  (key 'identity)
-                 (test 'eql))
+                 (test (graph-node-test graph)))
   (apply #'graph-search graph start end
          :queueing-function 'qappend
          (append
@@ -319,7 +323,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod dfs2 ((graph graph) start end
                  &key
                  (key 'identity)
-                 (test 'eql))
+                 (test (graph-node-test graph)))
   (apply #'graph-search graph start end
          :queueing-function 'qpush
          (append
@@ -384,8 +388,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                                     :graph new
                                     :node1 (node1 edge)
                                     :node2 (node2 edge)
-                                    :data (edge-data edge))))
-    
+                                    :data (edge-data edge)))
+          (graph-node-test new)
+          (graph-node-test graph))
     new))
 
 (defmethod add-edge ((graph simple-edge-list-graph) (edge edge))
@@ -408,7 +413,14 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                              :node2 node2)))
     (push edge (graph-edge-list graph))))
 
-(defmethod remove-edge ((graph simple-edge-list-graph)
+(defmethod remove-edge ((graph simple-edge-list-graph) (edge edge)
+                        &key (test (graph-node-test graph)))
+  (setf (graph-edge-list graph)
+        (remove edge
+                (graph-edge-list graph)
+                :test test)))
+
+(defmethod remove-edge-between-nodes ((graph simple-edge-list-graph)
                         node1 node2)
   (let ((edge (cons node1 node2)))
     (setf (graph-edge-list graph)
@@ -463,14 +475,44 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
           neighbors
           (remove element neighbors :test test)))))
 
-;;; this doesn't work. we can't use dfs map because we need a better
-;;; way to determine if there's a cycle or not. we only want cycles
-;;; greater than length 1!
-(defun find-cycle (graph &key (start (first-node graph)))
-  (let ((visited (make-hash-table)))
-    (mapcar 
-     (dfs-map graph start
-              (lambda (node)
-                (if (gethash node visited)
-                    (return-from find-cycle node)
-                    (setf (gethash node visited) node)))))))
+(defun find-cycle (graph
+                   &key (start (first-node graph))
+                   (test (graph-node-test graph)))
+  (let ((traversed-edges (make-hash-table))
+        (visited-nodes (make-hash-table :test test)))
+    (labels ((visit (node path)
+               
+               (setf (gethash node visited-nodes) node)
+               (let ((edges (find-edges-containing graph node)))
+                 (map nil
+                      (lambda (edge)
+                        (unless (gethash edge traversed-edges)
+                          (setf (gethash edge traversed-edges) edge)
+                          (let ((neighbor (if (funcall test
+                                                       (node1 edge)
+                                                       node)
+                                              (node2 edge)
+                                              (node1 edge))))
+                            (when (gethash neighbor visited-nodes)
+                              (return-from find-cycle
+                                (values (member neighbor
+                                                (nreverse (cons node path))
+                                                :test test)
+                                        edge)))
+                            (print neighbor)
+                            (visit neighbor (cons node path)))))
+                      edges))))
+      (visit start nil))))
+
+(defun find-cycles (graph &key (start (first-node graph)))
+  (let ((graph (copy-graph graph))
+        (cycle-edges))
+    (loop for edge = (nth-value 1
+                                (apply 'find-cycle graph
+                                       (when start `(:start ,start))))
+       while edge
+       do
+         (push edge cycle-edges)
+         (remove-edge graph edge))
+    (values cycle-edges graph)))
+

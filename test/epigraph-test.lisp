@@ -50,7 +50,7 @@
      do (add-node *big-graph* (princ-to-string i)))
   (loop for i below 499
      do (add-edge-between-nodes *big-graph* (princ-to-string i) (princ-to-string (1+ i))))
-  (loop for i below 600
+  (loop for i below 6000
      for j = (random 500)
      for k  = (random 500)
      do 
