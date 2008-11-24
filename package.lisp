@@ -65,4 +65,7 @@
            #:dfs-map
 
            #:simple-edge-list-graph
-           #:first-node))
+           #:first-node
+           
+           #:find-cycle
+           #:find-cycles))

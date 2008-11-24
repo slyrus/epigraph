@@ -499,7 +499,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                                                 (nreverse (cons node path))
                                                 :test test)
                                         edge)))
-                            (print neighbor)
                             (visit neighbor (cons node path)))))
                       edges))))
       (visit start nil))))
