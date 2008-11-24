@@ -1,4 +1,4 @@
-;;; file: epigraph-test.lisp
+;;; file: utilities.lisp
 ;;; author: cyrus harmon
 ;;;
 ;;; Copyright (c) 2008 Cyrus Harmon (ch-lisp@bobobeach.com)
@@ -28,45 +28,17 @@
 ;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :epigraph-test)
+(in-package :epigraph)
 
-(defparameter *graph* 
-  (let ((g (make-graph)))
-    (let ((n1 (add-node g "n1"))
-          (n2 (add-node g "n2")))
-      (add-edge-between-nodes g n1 n2)
-      (add-node g "n3")
-      (add-edge-between-nodes g "n2" "n3")
-      (add-edge-between-nodes g "n3" (add-node g "n4")))
-    g))
+(defun remove-keyword-args (keywords list)
+  (if (listp keywords)
+      (loop for (x y) on list by #'cddr
+         append (unless (member x keywords)
+                  (list x y)))
+      (loop for (x y) on list by #'cddr
+         append (unless (eq x keywords)
+                  (list x y)))))
 
-(defparameter *graph-copy* (copy-graph *graph*))
-
-(defparameter *big-graph* (graph:make-graph :node-test 'equal))
-
-(defun test-me ()
-  (print 'ok)
-  (loop for i below 500
-     do (add-node *big-graph* (princ-to-string i)))
-  (loop for i below 499
-     do (add-edge-between-nodes *big-graph* (princ-to-string i) (princ-to-string (1+ i))))
-  (loop for i below 600
-     for j = (random 500)
-     for k  = (random 500)
-     do 
-       #+nil (print (cons j k))
-       (add-edge-between-nodes *big-graph* (princ-to-string j) (princ-to-string k))))
-
-(test-me)
-
-(time
- (graph:bfs *big-graph*
-                "1"
-                "408"))
-
-(time
- (graph:dfs *big-graph*
-                "1"
-                "408"))
-
-
+(defun carhash (hash-table)
+  (with-hash-table-iterator (next-entry hash-table)
+    (next-entry)))

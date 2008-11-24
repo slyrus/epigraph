@@ -48,6 +48,7 @@
            #:node-count
            #:copy-graph
            #:add-edge
+           #:add-edge-between-nodes
            #:remove-edge
            #:edgep
            #:graph-edges

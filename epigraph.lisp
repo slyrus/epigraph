@@ -57,7 +57,7 @@
 ;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
-  ()
+  ((node-test :initarg :node-test :accessor graph-node-test :initform 'eql))
   (:documentation "The protocol class of graphs. The intent is that
   there will be concrete subclasses of GRAPH with different
   implementations of storing the nodes and edges."))
@@ -72,10 +72,10 @@
 (defparameter *default-graph-class* 'simple-edge-list-graph)
 (defparameter *default-edge-class* 'edge)
 
-(defun make-graph (&optional (graph-class *default-graph-class*))
+(defun make-graph (&rest args &key (class *default-graph-class*) &allow-other-keys)
   "Creates a GRAPH instance whose actual class will either be
 specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
-  (make-instance graph-class))
+  (apply #'make-instance class (remove-keyword-args :class args)))
 
 (defgeneric copy-graph (graph)
   (:documentation "Returns a copy of the graph which will contain
@@ -109,19 +109,23 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Returns the edges of graph-edges. Currently the
   format in which the edges are returned is not specified."))
 
-(defgeneric find-edges-from (graph node)
+(defgeneric find-edges-from (graph node &key test)
   (:documentation "Returns a list of the edges in graph that begin
   with node."))
 
-(defgeneric find-edges-to (graph node)
+(defgeneric find-edges-to (graph node &key test)
   (:documentation "Returns a list of the edges in graph that end
   with node."))
 
-(defgeneric find-edges-containing (graph node)
+(defgeneric find-self-edges (graph node &key test)
+  (:documentation "Returns a list of the edges in graph that begin and
+  end with node."))
+
+(defgeneric find-edges-containing (graph node &key test)
   (:documentation "Returns a list of the edges in graph that start or
   end with node."))
 
-(defgeneric neighbors (graph node)
+(defgeneric neighbors (graph node &key test)
   (:documentation "Returns a list of the nodes that are connected to
   node."))
 
@@ -151,7 +155,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   function of one argument, for each node as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
-(defmethod bfs ((graph graph) start end &key (key 'identity) (test 'eql))
+(defmethod bfs ((graph graph) start end
+                &key (key 'identity) (test (graph-node-test graph)))
+  (declare (optimize (debug 2)))
   (let ((visited-nodes (make-hash-table)))
     (labels
         ((bfs-visit (node-set-list)
@@ -178,8 +184,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod bfs-map ((graph graph) start fn
                     &key
                     (end nil end-supplied-p)
-                    key
-                    test)
+                    (key 'identity)
+                    (test (graph-node-test graph)))
   (let ((visited-nodes (make-hash-table)))
     (labels
         ((bfs-visit (node-list)
@@ -202,15 +208,21 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                (bfs-visit children)))))
       (bfs-visit (list start)))))
 
-(defmethod dfs ((graph graph) start end &key key test)
+(defmethod dfs ((graph graph) start end
+                &key
+                (key 'identity)
+                (test (graph-node-test graph)))
+  (declare (optimize (debug 2)))
   (let ((visited (list start)))
     (labels ((dfs-visit (node path)
-               (if (funcall test (funcall key node) end)
+               (if (funcall test
+                            (funcall key node)
+                            end)
                    (return-from dfs (nreverse (cons node path)))
                    (let ((neighbors (neighbors graph node)))
                      (map nil
                           (lambda (x)
-                            (unless (member x visited)
+                            (unless (member x visited :test test)
                               (push x visited)
                               (dfs-visit x (cons node path))))
                           neighbors)))))
@@ -219,9 +231,10 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod dfs-map ((graph graph) start fn
                     &key
                     (end nil end-supplied-p)
-                    key
-                    test)
-  (let ((visited (list start)))
+                    (visit-start nil)
+                    (key 'identity)
+                    (test (graph-node-test graph)))
+  (let ((visited (list (unless visit-start start))))
     (labels ((dfs-visit (node path)
                (funcall fn node)
                (when (and end-supplied-p
@@ -275,7 +288,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
          (search-nodes (makeq)))
     (qappend search-nodes (cons start nil))
     (labels
-        ((bfs-visit ()
+        ((visit ()
            (destructuring-bind (node . path)
                (qpop search-nodes)
              (when (funcall test (funcall key node) end)
@@ -290,8 +303,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                                  (cons x (cons node path)))))
                     neighbors)))
            (when (qitems search-nodes)
-             (bfs-visit))))
-      (bfs-visit))))
+             (visit))))
+      (visit))))
 
 (defmethod bfs2 ((graph graph) start end
                  &key
@@ -412,23 +425,52 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                (cons (node1 x) (node2 x)))
         :test 'equalp))
 
-(defmethod find-edges-from ((graph simple-edge-list-graph) node)
+(defmethod find-edges-from ((graph simple-edge-list-graph) node
+                            &key (test (graph-node-test graph)))
   (remove-if-not (lambda (x)
-                   (eq node x))
+                   (funcall test node x))
                  (graph-edges graph) :key #'node1))
 
-(defmethod find-edges-to ((graph simple-edge-list-graph) node)
+(defmethod find-edges-to ((graph simple-edge-list-graph) node
+                          &key (test (graph-node-test graph)))
   (remove-if-not (lambda (x)
-                   (eq node x))
+                   (funcall test node x))
                  (graph-edges graph) :key #'node2))
 
-(defmethod find-edges-containing ((graph simple-edge-list-graph) node)
-  (union (find-edges-from graph node)
-         (find-edges-to graph node)))
+(defmethod find-self-edges ((graph simple-edge-list-graph) node
+                            &key (test (graph-node-test graph)))
+  (remove-if-not (lambda (x)
+                   (funcall test (node1 x) (node2 x)))
+                 (graph-edges graph)))
 
-(defmethod neighbors (graph element) 
-  (let ((edges (find-edges-containing graph element)))
-    (remove element
-            (union (map (type-of edges) #'node1 edges)
-                   (map (type-of edges) #'node2 edges)))))
+(defmethod find-edges-containing ((graph simple-edge-list-graph) node
+                                  &key (test (graph-node-test graph)))
+  (union (apply #'find-edges-from graph node
+                (when test `(:test ,test)))
+         (apply #'find-edges-to graph node
+                (when test `(:test ,test)))))
 
+;;; TODO: we should remove element unless there is a self-edge here!
+(defmethod neighbors (graph element
+                      &key (test (graph-node-test graph))) 
+  (let ((edges (apply #'find-edges-containing graph element
+                      (when test `(:test ,test)))))
+    (let ((neighbors
+           (union (map (type-of edges) #'node1 edges)
+                  (map (type-of edges) #'node2 edges)
+                  :test test)))
+      (if (find-self-edges graph test)
+          neighbors
+          (remove element neighbors :test test)))))
+
+;;; this doesn't work. we can't use dfs map because we need a better
+;;; way to determine if there's a cycle or not. we only want cycles
+;;; greater than length 1!
+(defun find-cycle (graph &key (start (first-node graph)))
+  (let ((visited (make-hash-table)))
+    (mapcar 
+     (dfs-map graph start
+              (lambda (node)
+                (if (gethash node visited)
+                    (return-from find-cycle node)
+                    (setf (gethash node visited) node)))))))

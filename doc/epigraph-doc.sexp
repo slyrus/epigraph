@@ -15,29 +15,19 @@
        points, lines, etc... in a cartesian coordinate system, is a
        set of ndoes of edges. Epigraph is designed for representing
        graphs and for performing operations on the graphs, such as
-       adding and removing nodes, adding and removing edges between
-       the nodes, and various ways of searching the graph.")
+       adding and removing nodes (objects), adding and removing edges
+       between the nodes, and various ways of searching the graph.")
   (:h1 "Examples")
 
   (:h1 "Dictionary")
 
-  (:h2 "Nodes")
+  (:h2 "Graphs")
 
-  (:p "Instances of the class " (:code "NODE") " are relatively simple
-  objects that have a (presumably unique, let's discuss this later,
-  and presumably, at some point, every node will have to have a
-  non-nil name, but we are not enforcing that at the moment. In
-  addition, each node has a data slot for associating arbitrary data
-  with the node.")
-
-  (:pre
-   (:code
-    #q{(defclass node ()
-  ((name :accessor node-name :initarg :name :initform nil)
-   (data :accessor node-data :initarg :data :initform nil))
-  (:documentation "A simple class for representing nodes in a graph,
-  which will consist of a set of nodes, and a set of edges between the
-  nodes."))}))
+  (:p "Graphs contain nodes and edges. In order for a graph to
+  represent its nodes and edges, it needs some way of associating the
+  nodes and edges with the graph. Since nodes know nothing about the
+  edges and graph(s) containing them, we must use the graph itself to
+  represent this data.")
 
   (:h2 "Edges")
   
@@ -55,13 +45,5 @@
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
   (:documentation "Instances of the edge class represent edges between
-  nodes in a graph."))}))
+  nodes in a graph."))}))))
 
-  (:h2 "Graphs")
-
-  (:p "Graphs contain nodes and edges. In order for a graph to
-  represent its nodes and edges, it needs some way of associating the
-  nodes and edges with the graph. Since nodes know nothing about the
-  edges and graph(s) containing them, we must use the graph itself to
-  represent this data.")
-  ))
