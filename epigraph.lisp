@@ -33,8 +33,7 @@
 ;;;
 ;;; edges
 (defclass edge ()
-  ((graph :accessor edge-graph :initarg :graph)
-   (node1 :accessor node1 :initarg :node1)
+  ((node1 :accessor node1 :initarg :node1)
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
   (:documentation "Instances of the EDGE class represent edges between
@@ -53,6 +52,15 @@
 (defmethod print-object ((object edge) stream)
   (print-unreadable-object (object stream :type t :identity t)
     (print-edge-data object stream)))
+
+(defgeneric copy-edge (edge)
+  (:method ((edge edge))
+    (make-instance (class-of edge)
+                   :node1 (node1 edge)
+                   :node2 (node2 edge)
+                   :data (edge-data edge)))
+  (:documentation "Returns a copy of the edge."))
+
 
 ;;;
 ;;; graphs and generic functions for operating on graphs
@@ -77,7 +85,7 @@
 specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (apply #'make-instance class (remove-keyword-args :class args)))
 
-(defgeneric copy-graph (graph)
+(defgeneric copy-graph (graph &key copy-edges)
   (:documentation "Returns a copy of the graph which will contain
   copies of the edges, but the same nodes as the original graph."))
 
@@ -378,17 +386,15 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod graph-edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))
 
-(defmethod copy-graph ((graph simple-edge-list-graph))
+(defmethod copy-graph ((graph simple-edge-list-graph) &key copy-edges)
   (let ((new (make-instance (class-of graph))))
     (setf (graph-node-hash new)
           (alexandria:copy-hash-table (graph-node-hash graph))
           (graph-edge-list new)
-          (loop for edge in (graph-edge-list graph)
-             collect (make-instance (class-of edge)
-                                    :graph new
-                                    :node1 (node1 edge)
-                                    :node2 (node2 edge)
-                                    :data (edge-data edge)))
+          (if copy-edges
+              (loop for edge in (graph-edge-list graph)
+                 collect (copy-edge edge))
+              (graph-edge-list graph))
           (graph-node-test new)
           (graph-node-test graph))
     new))
@@ -457,6 +463,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod find-edges-containing ((graph simple-edge-list-graph) node
                                   &key (test (graph-node-test graph)))
+  (declare (optimize (debug 2)))
   (union (apply #'find-edges-from graph node
                 (when test `(:test ,test)))
          (apply #'find-edges-to graph node
@@ -478,12 +485,13 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defun find-cycle (graph
                    &key (start (first-node graph))
                    (test (graph-node-test graph)))
-  "Finds a cycle in graph, if one exists, using depth-first-search and
+  "FIXME! Now returns the edges of the cycle not the last edge!!!
+Finds a cycle in graph, if one exists, using depth-first-search and
 returns two VALUES, the edge that completes the cycle, and the path
 from the start of the cycle back to the first node in the cycle."
   (let ((traversed-edges (make-hash-table))
         (visited-nodes (make-hash-table :test test)))
-    (labels ((visit (node path)
+    (labels ((visit (node node-path edge-path)
                
                (setf (gethash node visited-nodes) node)
                (let ((edges (find-edges-containing graph node)))
@@ -497,26 +505,38 @@ from the start of the cycle back to the first node in the cycle."
                                               (node2 edge)
                                               (node1 edge))))
                             (when (gethash neighbor visited-nodes)
-                              (return-from find-cycle
-                                (values edge
-                                        (member neighbor
-                                                (nreverse (cons node path))
-                                                :test test))))
-                            (visit neighbor (cons node path)))))
+                              (let ((cycle-nodes (member neighbor
+                                                         (nreverse (cons
+                                                                    neighbor
+                                                                    (cons node node-path)))
+                                                         :test test)))
+                                (return-from find-cycle
+                                  (values
+                                   (member-if
+                                    (lambda (x)
+                                      (and (find (graph:node1 x) cycle-nodes)
+                                           (find (graph:node2 x) cycle-nodes)))
+                                    (nreverse (cons edge edge-path)))
+                                   cycle-nodes))))
+                            (visit neighbor
+                                   (cons node node-path)
+                                   (cons edge edge-path)))))
                       edges))))
-      (visit start nil))))
+      (visit start nil nil))))
 
 (defun find-cycles (graph &key (start (first-node graph)))
-  "Finds all of the cycles in a graph and returns two VALUEs, the list
-of the edges that make complete the cycles, and a copy of GRAPH, with
-the cycle-forming edges removed."
-  (let ((graph (copy-graph graph))
+  "Finds all of the cycles in a graph and returns three VALUEs, a list
+of the edges that make complete the cycles, a list of the paths that
+form the cycles, and a copy of GRAPH, with the cycle-forming edges
+removed."
+  (let ((graph (copy-graph graph :copy-edges t))
         (cycle-edges))
-    (loop for edge = (apply 'find-cycle graph
-                            (when start `(:start ,start)))
-       while edge
+    (loop for (edge-path node-path) = (multiple-value-list
+                                       (apply 'find-cycle graph
+                                              (when start `(:start ,start))))
+       while edge-path
        do
-         (push edge cycle-edges)
-         (remove-edge graph edge))
-    (values cycle-edges graph)))
+         (push (list edge-path node-path) cycle-edges)
+         (remove-edge graph (car edge-path)))
+    (apply #'values (append (apply #'mapcar #'list cycle-edges) (list graph)))))
 

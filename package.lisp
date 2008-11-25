@@ -37,6 +37,7 @@
            #:edge-data
            #:*default-edge-class*
            #:print-edge-data
+           #:copy-edge
            
            #:graph
            #:graph-nodes
