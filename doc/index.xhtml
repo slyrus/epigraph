@@ -16,6 +16,51 @@
 </p>
 <p>Epigraph is still in its early stages of development and the
   API may still change drastically.</p>
+<h1>Contents:</h1>
+<h2>Dictionary</h2>
+<ul><li><a href="#parameter:*default-graph-class*">*default-graph-class*</a>
+</li>
+<li><a href="#parameter:*default-edge-class*">*default-edge-class*</a>
+</li>
+<li><a href="#function:make-graph">make-graph</a>
+</li>
+<li><a href="#generic-function:copy-graph">copy-graph</a>
+</li>
+<li><a href="#generic-function:add-node">add-node</a>
+</li>
+<li><a href="#generic-function:graph-node-p">graph-node-p</a>
+</li>
+<li><a href="#generic-function:node-count">node-count</a>
+</li>
+<li><a href="#generic-function:add-edge">add-edge</a>
+</li>
+<li><a href="#generic-function:add-edge-between-nodes">add-edge-between-nodes</a>
+</li>
+<li><a href="#generic-function:remove-edge">remove-edge</a>
+</li>
+<li><a href="#generic-function:remove-edge-between-nodes">remove-edge-between-nodes</a>
+</li>
+<li><a href="#generic-function:edgep">edgep</a>
+</li>
+<li><a href="#generic-function:find-edges-from">find-edges-from</a>
+</li>
+<li><a href="#generic-function:find-edges-to">find-edges-to</a>
+</li>
+<li><a href="#generic-function:find-self-edges">find-self-edges</a>
+</li>
+<li><a href="#generic-function:find-edges-containing">find-edges-containing</a>
+</li>
+<li><a href="#generic-function:neighbors">neighbors</a>
+</li>
+<li><a href="#generic-function:bfs">bfs</a>
+</li>
+<li><a href="#generic-function:bfs-map">bfs-map</a>
+</li>
+<li><a href="#generic-function:dfs">dfs</a>
+</li>
+<li><a href="#generic-function:dfs-map">dfs-map</a>
+</li>
+</ul>
 <h1>Examples</h1>
 <pre><code>(let ((g (make-graph :node-test 'equal)))
    (add-node g "n1")
@@ -103,31 +148,37 @@
   there will be concrete subclasses of GRAPH with different
   implementations of storing the nodes and edges."))</code>
 </pre>
-<ul><li>[parameter] <code>*default-graph-class*</code>
+<h3>Functions and parameters for manipulating graphs</h3>
+<ul><li>[parameter] <a name="parameter:*default-graph-class*"><code>*default-graph-class*</code>
+</a>
 <p>When the make-graph function is called without explicitly
    specifying a graph class, an object of the class named in the
    parameter *default-graph-class* will be created.</p>
 </li>
-<li>[parameter] <code>*default-edge-class*</code>
+<li>[parameter] <a name="parameter:*default-edge-class*"><code>*default-edge-class*</code>
+</a>
 <p>When the make-edge-between-nodes function is called
    without explicitly specifying an edge class, an object of the class
    named in the parameter *default-edge-class* will be created and
    added to the graph.</p>
 </li>
-<li>[function] <code>make-graph args &amp;key (class *default-graph-class*)
+<li>[function] <a name="function:make-graph"><code>make-graph args &amp;key (class *default-graph-class*)
        node-test &amp;allow-other-keys =&gt; graph</code>
+</a>
 <p>Creates an instance of the specified class, passing
        args (other than the :class keyword argument) to the
        make-instance call. Returns the newly created graph object.</p>
 </li>
-<li>[generic function] <code>copy-graph graph &amp;key copy-edges =&gt; new-graph</code>
+<li>[generic function] <a name="generic-function:copy-graph"><code>copy-graph graph &amp;key copy-edges =&gt; new-graph</code>
+</a>
 <p>Creates a new graph of the same class as graph and sets
        the edges of the new graph to be the same as the edges of
        graph, or, if copy-edges is non-nil, sets the edges of the new
        graph to be a copy of the edges of graph. Returns the new graph
        new-graph.</p>
 </li>
-<li>[generic function] <code>add-node graph node =&gt; node</code>
+<li>[generic function] <a name="generic-function:add-node"><code>add-node graph node =&gt; node</code>
+</a>
 <p>Adds a node to the graph. Note that there are no
        requirements for the node object. Any lisp value can be used as
        a node in a graph. However, a given node can only be added to a
@@ -135,13 +186,16 @@
        graph is determined by the comparison function specified by the
        node-test slot of the graph.</p>
 </li>
-<li>[generic function] <code>graph-node-p graph node =&gt; result</code>
+<li>[generic function] <a name="generic-function:graph-node-p"><code>graph-node-p graph node =&gt; result</code>
+</a>
 <p>Returns true if node is a node in graph.</p>
 </li>
-<li>[generic function] <code>node-count graph =&gt; node-count</code>
+<li>[generic function] <a name="generic-function:node-count"><code>node-count graph =&gt; node-count</code>
+</a>
 <p>Returns the number of nodes in graph.</p>
 </li>
-<li>[generic function] <code>add-edge graph edge =&gt; edge</code>
+<li>[generic function] <a name="generic-function:add-edge"><code>add-edge graph edge =&gt; edge</code>
+</a>
 <p>Adds an an edge to the grap. Returns the newly added
        edge. This function is to be used when one has in instance of
        the edge class or a class that extends edge. To automatically
@@ -151,50 +205,61 @@
        otherwise it returns an error. This may change in the
        future.</p>
 </li>
-<li>[generic function] <code>add-edge-between-nodes graph node1 node2 &amp;key
+<li>[generic function] <a name="generic-function:add-edge-between-nodes"><code>add-edge-between-nodes graph node1 node2 &amp;key
        (edge-class *default-edge-class*) =&gt; edge</code>
+</a>
 <p>Creates an instance of edge-class between node1 and node2,
        adds it to graph and returns the newly created edge.</p>
 </li>
-<li>[generic function] <code>remove-edge graph edge =&gt; result</code>
+<li>[generic function] <a name="generic-function:remove-edge"><code>remove-edge graph edge =&gt; result</code>
+</a>
 <p>Removes edge from the specified graph. Returns nil if no
        edge was removed, otherwise an unspecified non-nil value.</p>
 </li>
-<li>[generic function] <code>remove-edge-between-nodes graph node1 node2 =&gt; result</code>
+<li>[generic function] <a name="generic-function:remove-edge-between-nodes"><code>remove-edge-between-nodes graph node1 node2 =&gt; result</code>
+</a>
 <p>If there are one or more edges between node1 and node2,
        remove one edge between the two nodes. Returns nil if no edge
        was removed, otherwise an unspecified non-nil value.</p>
 </li>
-<li>[generic function] <code>edgep graph node1 node2 =&gt; result</code>
+<li>[generic function] <a name="generic-function:edgep"><code>edgep graph node1 node2 =&gt; result</code>
+</a>
 <p>Returns t if there exists an edge in graph between node1 and
      node2, otherwise nil.</p>
 </li>
-<li>[generic function] <code>find-edges-from graph node &amp;key test =&gt; edge-list</code>
+<li>[generic function] <a name="generic-function:find-edges-from"><code>find-edges-from graph node &amp;key test =&gt; edge-list</code>
+</a>
 <p>This is currently underspecified. One day when we have
      directed edges, this will return edges from a given node.</p>
 </li>
-<li>[generic function] <code>find-edges-to graph node &amp;key test =&gt; edge-list</code>
+<li>[generic function] <a name="generic-function:find-edges-to"><code>find-edges-to graph node &amp;key test =&gt; edge-list</code>
+</a>
 <p>This is currently underspecified. One day when we have
      directed edges, this will return edges to a given node.</p>
 </li>
-<li>[generic function] <code>find-self-edges graph node &amp;key test =&gt; edge-list</code>
+<li>[generic function] <a name="generic-function:find-self-edges"><code>find-self-edges graph node &amp;key test =&gt; edge-list</code>
+</a>
 <p>Returns of the loop edges for a given node, that is edges
        that start and end with the same node.</p>
 </li>
-<li>[generic function] <code>find-edges-containing graph node &amp;key test =&gt; edge-list</code>
+<li>[generic function] <a name="generic-function:find-edges-containing"><code>find-edges-containing graph node &amp;key test =&gt; edge-list</code>
+</a>
 <p>Returns a list of the edges that start or end with the
        given node.</p>
 </li>
-<li>[generic function] <code>neighbors graph node &amp;key test =&gt; node-list</code>
+<li>[generic function] <a name="generic-function:neighbors"><code>neighbors graph node &amp;key test =&gt; node-list</code>
+</a>
 <p>Returns a list of the nodes that are directly connected to
      node by a single edge.</p>
 </li>
-<li>[generic function] <code>map-nodes graph fn =&gt; nil</code>
+<li>[generic function] <a name="generic-function:map-nodes"><code>map-nodes graph fn =&gt; nil</code>
+</a>
 <p>Loops over the nodes in the graph (in an unspecified order)
      and calls fn with one argument, the node, for each node in the
      graph.</p>
 </li>
-<li>[generic function] <code>bfs graph start end &amp;key key test</code>
+<li>[generic function] <a name="generic-function:bfs"><code>bfs graph start end &amp;key key test</code>
+</a>
 <p>Performs a breadth-first search on graph starting at the
        start node and proceeding until the end value is found, if end
        is non-nil, or until all nodes have been searched if end is
@@ -203,14 +268,53 @@
        node. The comparison is done by the test operator which
        defaults to the graph-node-test value of the graph object.</p>
 </li>
-<li>[generic function] <code>bfs-map graph start fn &amp;key end key test</code>
+<li>[generic function] <a name="generic-function:bfs-map"><code>bfs-map graph start fn &amp;key end key test</code>
+</a>
 <p></p>
 </li>
-<li>[generic function] <code>dfs</code>
+<li>[generic function] <a name="generic-function:dfs"><code>dfs graph start end &amp;key key test</code>
+</a>
 <p></p>
 </li>
-<li>[generic function] <code>dfs-map</code>
+<li>[generic function] <a name="generic-function:dfs-map"><code>dfs-map graph start fn &amp;key end key test</code>
+</a>
 <p></p>
+</li>
+</ul>
+<h3>simple-edge-list-graph</h3>
+<p>The simple-edge-list-graph class is used for representing
+  graphs where the edges are stored in a list in the edges slot. Nodes
+  that are associated with the graph are stored in the hash-table
+  stored in the node-has slot.</p>
+<pre><code>(defclass simple-edge-list-graph (graph)
+  ((node-hash :accessor graph-node-hash
+              :initarg :nodes
+              :initform (make-hash-table :test 'equal))
+   (edges :accessor graph-edge-list :initarg :edges :initform nil))
+  (:documentation "A concrete subclass of graph that represents the
+  edges in the graph with a list of edges between nodes."))
+</code>
+</pre>
+<ul><li>[generic function] <a name="generic-function:first-node"><code>first-node</code>
+</a>
+<p></p>
+</li>
+</ul>
+<h3>More graph functions</h3>
+<ul><li>[function] <a name="function:find-cycle"><code>find-cycle graph &amp;key (start (first-node graph))
+   (test (graph-node-test graph)))</code>
+</a>
+<p>find-cycle finds a cycle in graph, if one exists, using
+depth-first-search and returns two VALUES, a list of the edges in the
+cycle, and a list of the nodes in the cycle.</p>
+</li>
+</ul>
+<ul><li>[function] <a name="function:find-cycles"><code>find-cycles graph &amp;key (start (first-node graph))</code>
+</a>
+<p>find-cycles finds all of the cycles in a graph and returns
+three VALUEs, a list of the edges that make complete the cycles, a
+list of the paths that form the cycles, and a copy of GRAPH, with the
+cycle-forming edges removed.</p>
 </li>
 </ul>
 </span>
