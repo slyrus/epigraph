@@ -29,6 +29,23 @@
   edges and graph(s) containing them, we must use the graph itself to
   represent this data.")
 
+  (:p "Epigraph has a node-agnostic graph model, that is to say the
+  graph class doesn't explicitly provide (or demand) any support for a
+  node object, as such. In other words, any lisp value can be used as
+  a node. For various computations on graphs we will need to be able
+  to find and compare the nodes with other lisp values. Therefore we
+  need to consider the kind of equality used by graphs in comparing
+  nodes. Just as lisp hash-tables have a :test paramter, we add an
+  optional :test parameter to the various ways of constructing
+  graphs. In this way if a graph will only use lisp objects as keys it
+  can do so by comparing the nodes using the lisp eq operator (or
+  eql, equal, etc...). If a graph hopes to use strings as the key, the
+  nodes will need to be compared using the equal operator. For a
+  common simple case in which the nodes are just the strings
+  themselves, we can make the graph as follows:")
+
+  (:code "(make-graph :node-test 'equal)")
+
   (:h2 "Edges")
   
   (:p "Edges connect two nodes in a graph. Currently, edges are just
