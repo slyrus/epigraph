@@ -10,46 +10,209 @@
        points, lines, etc... in a cartesian coordinate system, is a
        set of ndoes of edges. Epigraph is designed for representing
        graphs and for performing operations on the graphs, such as
-       adding and removing nodes, adding and removing edges between
-       the nodes, and various ways of searching the graph.</p>
+       adding and removing nodes (objects), adding and removing edges
+       between the nodes, and various ways of searching the graph.</p>
+<p>Epigraph is written by Cyrus Harmon and can currently be found at: <a href="http://git.cyrusharmon.org/cgi-bin/gitweb.cgi?p=epigraph.git">http://git.cyrusharmon.org/cgi-bin/gitweb.cgi?p=epigraph.git</a>
+</p>
+<p>Epigraph is still in its early stages of development and the
+  API may still change drastically.</p>
 <h1>Examples</h1>
-<h1>Dictionary</h1>
-<h2>Nodes</h2>
-<p>Instances of the class <code>NODE</code>
- are relatively simple
-  objects that have a (presumably unique, let's discuss this later,
-  and presumably, at some point, every node will have to have a
-  non-nil name, but we are not enforcing that at the moment. In
-  addition, each node has a data slot for associating arbitrary data
-  with the node.</p>
-<pre><code>(defclass node ()
-  ((name :accessor node-name :initarg :name :initform nil)
-   (data :accessor node-data :initarg :data :initform nil))
-  (:documentation "A simple class for representing nodes in a graph,
-  which will consist of a set of nodes, and a set of edges between the
-  nodes."))</code>
+<pre><code>(let ((g (make-graph :node-test 'equal)))
+   (add-node g "n1")
+   (add-node g "n2")
+   (add-edge-between-nodes g "n1" "n2")
+   (add-edge-between-nodes g "n1" "n2")
+   (add-edge-between-nodes g "n1" "n1")
+   (describe g)
+   (find-self-edges g "n1"))</code>
 </pre>
+<pre><code>(defparameter *graph* 
+   (let ((g (make-graph :node-test 'equal)))
+     (loop for i from 1 below 12
+        do (add-node g (concatenate 'string "Node " (princ-to-string i))))
+     (add-edge-between-nodes g "Node 1" "Node 2")
+     (add-edge-between-nodes g "Node 1" "Node 3")
+     (add-edge-between-nodes g "Node 3" "Node 4")
+     (add-edge-between-nodes g "Node 3" "Node 5")
+     (add-edge-between-nodes g "Node 2" "Node 6")
+     (add-edge-between-nodes g "Node 6" "Node 7")
+     (add-edge-between-nodes g "Node 6" "Node 8")
+     (add-edge-between-nodes g "Node 4" "Node 9")
+     (add-edge-between-nodes g "Node 5" "Node 10")
+     (add-edge-between-nodes g "Node 5" "Node 11")
+     (add-edge-between-nodes g "Node 1" "Node 11")
+     (add-edge-between-nodes g "Node 8" "Node 7")
+     g))
+          
+   (edgep *graph* "Node 1" "Node 2")
+   (bfs *graph* "Node 1" "Node 11")</code>
+</pre>
+<h1>Dictionary</h1>
 <h2>Edges</h2>
-<p>Edges connect two nodes in a graph. Currently, edges are just
-  represented by simple <code>CONS</code>
-es, and know nothing about
-  the graph in which they are found, nor do they have any knowledge of
-  the "type" of edge they represent, such as directed, undirected,
-  etc...</p>
+<p>Instances of the <code>EDGE</code>
+ class represent a
+  connection between two nodes. Currently, all edges are considered to
+  be undirected, although it is anticipated that support for directed
+  edges will be added in the future.</p>
 <pre><code>(defclass edge ()
-  ((graph :accessor edge-graph :initarg :graph)
-   (node1 :accessor node1 :initarg :node1)
+  ((node1 :accessor node1 :initarg :node1)
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
-  (:documentation "Instances of the edge class represent edges between
+  (:documentation "Instances of the EDGE class represent edges between
   nodes in a graph."))</code>
 </pre>
+<ul><li>[generic function] <code>print-edge-data object stream =&gt; result</code>
+<p>Print data about the edge object. returns NIL if
+   stream is non-nil or a string containg the edge object data if
+   stream is NIL.</p>
+</li>
+<li>[generic function] <code>copy-edge edge =&gt; new-edge</code>
+<p>copy-edge makes a new instance of the same class as edge,
+   new-edge, and sets the node1, node2 and data of new-edge to be the
+   same as the respective values in edge. Returns new-edge. Subclasses
+   of edge should specialize this function to copy additional data as
+   appropriate.</p>
+</li>
+</ul>
 <h2>Graphs</h2>
 <p>Graphs contain nodes and edges. In order for a graph to
   represent its nodes and edges, it needs some way of associating the
   nodes and edges with the graph. Since nodes know nothing about the
   edges and graph(s) containing them, we must use the graph itself to
   represent this data.</p>
+<p>Epigraph has a node-agnostic graph model, that is to say the
+  graph class doesn't explicitly provide (or demand) any support for a
+  node object, as such. In other words, any lisp value can be used as
+  a node. For various computations on graphs we will need to be able
+  to find and compare the nodes with other lisp values. Therefore we
+  need to consider the kind of equality used by graphs in comparing
+  nodes. Just as lisp hash-tables have a :test paramter, we add an
+  optional :test parameter to the various ways of constructing
+  graphs. In this way if a graph will only use lisp objects as keys it
+  can do so by comparing the nodes using the lisp eq operator (or
+  eql, equal, etc...). If a graph hopes to use strings as the key, the
+  nodes will need to be compared using the equal operator. For a
+  common simple case in which the nodes are just the strings
+  themselves, we can make the graph as follows:</p>
+<p><code>(make-graph :node-test 'equal)</code>
+</p>
+<p>The graph class is defined as follows:</p>
+<pre><code>(defclass graph ()
+  ((node-test :initarg :node-test :accessor graph-node-test :initform 'eql))
+   (:documentation "The protocol class of graphs. The intent is that
+  there will be concrete subclasses of GRAPH with different
+  implementations of storing the nodes and edges."))</code>
+</pre>
+<ul><li>[parameter] <code>*default-graph-class*</code>
+<p>When the make-graph function is called without explicitly
+   specifying a graph class, an object of the class named in the
+   parameter *default-graph-class* will be created.</p>
+</li>
+<li>[parameter] <code>*default-edge-class*</code>
+<p>When the make-edge-between-nodes function is called
+   without explicitly specifying an edge class, an object of the class
+   named in the parameter *default-edge-class* will be created and
+   added to the graph.</p>
+</li>
+<li>[function] <code>make-graph args &amp;key (class *default-graph-class*)
+       node-test &amp;allow-other-keys =&gt; graph</code>
+<p>Creates an instance of the specified class, passing
+       args (other than the :class keyword argument) to the
+       make-instance call. Returns the newly created graph object.</p>
+</li>
+<li>[generic function] <code>copy-graph graph &amp;key copy-edges =&gt; new-graph</code>
+<p>Creates a new graph of the same class as graph and sets
+       the edges of the new graph to be the same as the edges of
+       graph, or, if copy-edges is non-nil, sets the edges of the new
+       graph to be a copy of the edges of graph. Returns the new graph
+       new-graph.</p>
+</li>
+<li>[generic function] <code>add-node graph node =&gt; node</code>
+<p>Adds a node to the graph. Note that there are no
+       requirements for the node object. Any lisp value can be used as
+       a node in a graph. However, a given node can only be added to a
+       graph once. But whether or not a given node is already in a
+       graph is determined by the comparison function specified by the
+       node-test slot of the graph.</p>
+</li>
+<li>[generic function] <code>graph-node-p graph node =&gt; result</code>
+<p>Returns true if node is a node in graph.</p>
+</li>
+<li>[generic function] <code>node-count graph =&gt; node-count</code>
+<p>Returns the number of nodes in graph.</p>
+</li>
+<li>[generic function] <code>add-edge graph edge =&gt; edge</code>
+<p>Adds an an edge to the grap. Returns the newly added
+       edge. This function is to be used when one has in instance of
+       the edge class or a class that extends edge. To automatically
+       create and add an edge between two nodes, see the
+       add-edge-between-nodes function. NOTE: currently the add-edge
+       function ensures that both of the nodes in edge are in graph,
+       otherwise it returns an error. This may change in the
+       future.</p>
+</li>
+<li>[generic function] <code>add-edge-between-nodes graph node1 node2 &amp;key
+       (edge-class *default-edge-class*) =&gt; edge</code>
+<p>Creates an instance of edge-class between node1 and node2,
+       adds it to graph and returns the newly created edge.</p>
+</li>
+<li>[generic function] <code>remove-edge graph edge =&gt; result</code>
+<p>Removes edge from the specified graph. Returns nil if no
+       edge was removed, otherwise an unspecified non-nil value.</p>
+</li>
+<li>[generic function] <code>remove-edge-between-nodes graph node1 node2 =&gt; result</code>
+<p>If there are one or more edges between node1 and node2,
+       remove one edge between the two nodes. Returns nil if no edge
+       was removed, otherwise an unspecified non-nil value.</p>
+</li>
+<li>[generic function] <code>edgep graph node1 node2 =&gt; result</code>
+<p>Returns t if there exists an edge in graph between node1 and
+     node2, otherwise nil.</p>
+</li>
+<li>[generic function] <code>find-edges-from graph node &amp;key test =&gt; edge-list</code>
+<p>This is currently underspecified. One day when we have
+     directed edges, this will return edges from a given node.</p>
+</li>
+<li>[generic function] <code>find-edges-to graph node &amp;key test =&gt; edge-list</code>
+<p>This is currently underspecified. One day when we have
+     directed edges, this will return edges to a given node.</p>
+</li>
+<li>[generic function] <code>find-self-edges graph node &amp;key test =&gt; edge-list</code>
+<p>Returns of the loop edges for a given node, that is edges
+       that start and end with the same node.</p>
+</li>
+<li>[generic function] <code>find-edges-containing graph node &amp;key test =&gt; edge-list</code>
+<p>Returns a list of the edges that start or end with the
+       given node.</p>
+</li>
+<li>[generic function] <code>neighbors graph node &amp;key test =&gt; node-list</code>
+<p>Returns a list of the nodes that are directly connected to
+     node by a single edge.</p>
+</li>
+<li>[generic function] <code>map-nodes graph fn =&gt; nil</code>
+<p>Loops over the nodes in the graph (in an unspecified order)
+     and calls fn with one argument, the node, for each node in the
+     graph.</p>
+</li>
+<li>[generic function] <code>bfs graph start end &amp;key key test</code>
+<p>Performs a breadth-first search on graph starting at the
+       start node and proceeding until the end value is found, if end
+       is non-nil, or until all nodes have been searched if end is
+       nil. Note that at each note the value to test against end is
+       generated by calling key, which defaults to #'identity, on the
+       node. The comparison is done by the test operator which
+       defaults to the graph-node-test value of the graph object.</p>
+</li>
+<li>[generic function] <code>bfs-map graph start fn &amp;key end key test</code>
+<p></p>
+</li>
+<li>[generic function] <code>dfs</code>
+<p></p>
+</li>
+<li>[generic function] <code>dfs-map</code>
+<p></p>
+</li>
+</ul>
 </span>
 </body>
 </html>
