@@ -463,7 +463,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod find-edges-containing ((graph simple-edge-list-graph) node
                                   &key (test (graph-node-test graph)))
-  (declare (optimize (debug 2)))
   (union (apply #'find-edges-from graph node
                 (when test `(:test ,test)))
          (apply #'find-edges-to graph node
@@ -506,9 +505,7 @@ from the start of the cycle back to the first node in the cycle."
                                               (node1 edge))))
                             (when (gethash neighbor visited-nodes)
                               (let ((cycle-nodes (member neighbor
-                                                         (nreverse (cons
-                                                                    neighbor
-                                                                    (cons node node-path)))
+                                                         (nreverse (cons node node-path))
                                                          :test test)))
                                 (return-from find-cycle
                                   (values
@@ -538,5 +535,6 @@ removed."
        do
          (push (list edge-path node-path) cycle-edges)
          (remove-edge graph (car edge-path)))
-    (apply #'values (append (apply #'mapcar #'list cycle-edges) (list graph)))))
+    (when cycle-edges
+      (apply #'values (append (apply #'mapcar #'list cycle-edges) (list graph))))))
 
