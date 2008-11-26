@@ -72,17 +72,19 @@
 
 ;;; should we define feature-rich subclasses of graph?
 ;;; e.g.
-(defclass singly-connected-graph (graph) ())
-(defclass acyclic-graph (graph) ())
-(defclass undirected-graph (graph) ())
-(defclass digraph (graph) ())
+;; (defclass singly-connected-graph (graph) ())
+;; (defclass acyclic-graph (graph) ())
+;; (defclass undirected-graph (graph) ())
+;; (defclass digraph (graph) ())
 
 (defparameter *default-graph-class* 'simple-edge-list-graph)
 (defparameter *default-edge-class* 'edge)
 
-(defun make-graph (&rest args &key (class *default-graph-class*) &allow-other-keys)
+(defun make-graph (&rest args &key (class *default-graph-class*)
+  node-test &allow-other-keys)
   "Creates a GRAPH instance whose actual class will either be
 specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
+  (declare (ignore node-test))
   (apply #'make-instance class (remove-keyword-args :class args)))
 
 (defgeneric copy-graph (graph &key copy-edges)
@@ -414,7 +416,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (unless (graph-node-p graph node2)
     (error "Node ~A not in graph ~A" node2 graph))
   (let ((edge (make-instance edge-class
-                             :graph graph
                              :node1 node1
                              :node2 node2)))
     (push edge (graph-edge-list graph))))
@@ -468,7 +469,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
          (apply #'find-edges-to graph node
                 (when test `(:test ,test)))))
 
-;;; TODO: we should remove element unless there is a self-edge here!
 (defmethod neighbors (graph element
                       &key (test (graph-node-test graph))) 
   (let ((edges (apply #'find-edges-containing graph element
@@ -484,10 +484,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defun find-cycle (graph
                    &key (start (first-node graph))
                    (test (graph-node-test graph)))
-  "FIXME! Now returns the edges of the cycle not the last edge!!!
-Finds a cycle in graph, if one exists, using depth-first-search and
-returns two VALUES, the edge that completes the cycle, and the path
-from the start of the cycle back to the first node in the cycle."
+  "Finds a cycle in graph, if one exists, using depth-first-search and
+returns two VALUES, a list of the edges in the cycle, and a list of
+the nodes in the cycle."
   (let ((traversed-edges (make-hash-table))
         (visited-nodes (make-hash-table :test test)))
     (labels ((visit (node node-path edge-path)
