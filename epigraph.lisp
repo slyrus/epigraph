@@ -344,6 +344,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 ;;;
 ;;; simple edge list graph
 (defclass simple-edge-list-graph (graph)
+  ;; FIXME! the :test for the node-hash should probably be the
+  ;; graph-node-test not necessarily 'equal!
   ((node-hash :accessor graph-node-hash
               :initarg :nodes
               :initform (make-hash-table :test 'equal))
@@ -366,7 +368,14 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmacro with-graph-iterator ((function graph) &body body)
   `(with-hash-table-iterator (,function (graph-node-hash ,graph))
      ,@body))
-  
+ 
+(defgeneric first-node (graph)
+  (:documentation "Returns the first node in a graph. Note that not
+  all graphs are rquired to support this function and that even graphs
+  that do support this might not have a consistent ordering of the
+  nodes such that successive first-node calls might not return the
+  same node."))
+
 (defmethod first-node ((graph simple-edge-list-graph))
   (with-graph-iterator (next-entry graph)
     (nth-value 1 (next-entry))))
