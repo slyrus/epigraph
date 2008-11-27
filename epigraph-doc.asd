@@ -39,5 +39,7 @@
      (:object-cl-pdf-file :epigraph-doc-pdf
                           :pathname #p"epigraph.pdf"
                           :depends-on (:epigraph-doc-filtered-sexp)
-                          :input-object :epigraph-doc-filtered-sexp)))))
+                          :input-object :epigraph-doc-filtered-sexp)
+     (:static-file :simple-css
+                   :pathname #p "simple.css")))))
 

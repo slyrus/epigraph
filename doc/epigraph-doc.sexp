@@ -2,13 +2,16 @@
   (:copyright
    "Copyright 2008, Cyrus Harmon. All Rights Reserved. See COPYRIGHT
   file for details")
-  (:title "epigraph  A library for representing and processing graphs,
+  (:title "epigraph: A library for representing and processing graphs,
   nodges and edges.")
   (:author "Cyrus L. Harmon"))
- (:html-metadata (:htmlcss "simple.css") )
- 
+ (:html-metadata (:htmlcss #.(ch-asdf:asdf-lookup-path
+                              "asdf:/epigraph-doc/doc/simple-css")
+                           :inline)
+                 #+nil (:htmlcss "simple.css"))
  (:span
-  (:title "Epigraph")
+  (:h1 "Epigraph")
+
   (:p "Epigraph is relatively simple, small, and, hopefully,
        lightweight package for representing graphs in common lisp. A
        graph, in the computer science sense, not the visualization of
@@ -25,7 +28,6 @@
   
   (:p "Epigraph is still in its early stages of development and the
   API may still change drastically.")
-
 
   (:h1 "Contents:")
 
@@ -170,7 +172,6 @@
      (:p "When the make-graph function is called without explicitly
    specifying a graph class, an object of the class named in the
    parameter *default-graph-class* will be created."))
-
 
    (:item "[parameter] "
      (:a :name "parameter:*default-edge-class*"
@@ -363,5 +364,4 @@ list of the paths that form the cycles, and a copy of GRAPH, with the
 cycle-forming edges removed.")))
 
   ))
-
 
