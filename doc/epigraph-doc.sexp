@@ -8,7 +8,7 @@
  (:html-metadata (:htmlcss #.(ch-asdf:asdf-lookup-path
                               "asdf:/epigraph-doc/doc/simple-css")
                            :inline)
-                 #+nil (:htmlcss "simple.css"))
+                 (:htmlcss "simple.css"))
  (:span
   (:h1 "Epigraph")
 

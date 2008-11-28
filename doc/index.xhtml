@@ -3,7 +3,7 @@
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><title>epigraph: A library for representing and processing graphs,
   nodges and edges.</title>
-<style>
+<link rel="stylesheet" type="text/css" href="simple.css"><style>
 
 body {
     color: #333;
@@ -151,6 +151,155 @@ a.noborder:hover { text-decoration: none; border: none; padding: 0; }
 a.noborder:focus { text-decoration: none; border: none; padding: 0; }  
 pre.none { padding:5px; background-color:#ffffff }
 </style>
+<link rel="stylesheet" type="text/css" href="simple.css"/><style>
+
+body {
+    color: #333;
+    background-color: #FFF;
+    background-attachment: fixed;
+    font-size: 12px;
+    font-family: "helvetica neue", "helvetica" sans-serif;
+    padding: 12px;
+    counter-reset: chapter;
+}
+
+div[class~="title"] {
+   font-style: normal;
+   font-weight: bold;
+   padding: 0px;
+   margin-top: 0px;
+   margin-bottom: 0px;
+   font-size: 20px;
+   border-bottom: 1px solid;
+}
+
+h1 {
+   padding: 2px;
+   margin-top: 2px;
+   padding-top: 4px;
+   font-size: 14px;
+   font-style: italic;
+   padding-bottom: 6px;
+}
+
+h2[class~="author"] {
+   padding-top: 0px;
+   padding-bottom: 0px;
+   margin-top: 2px;
+   margin-bottom: 2px;
+}
+
+h2[class~="date"] {
+   padding-top: 0px;
+   padding-bottom: 0px;
+   margin-top: 2px;
+   margin-bottom: 2px;
+}
+
+h2 {
+   font-size: 16px;
+}
+
+h3 {
+   font-size: 14px;
+}
+
+h4 {
+   font-size: 12px;
+}
+
+ul {
+   padding-left: 6px;
+   margin-left: 6px;
+}
+
+li {
+   margin-left: 12px;
+}
+
+li[class~="pub"] {
+   padding-top: 3px;
+   margin-left: 6px;
+   font-size: 9px;
+}
+
+tbody[class~="nav2"] { 
+   text-align: left;
+}
+
+table[class~="nav2"] {
+   padding-top: 24px;
+}
+
+tr, td, tbody, table {
+   border-collapse: collapse;
+   vertical-align: top;
+}
+
+tbody {
+   vertical-align: top;
+}
+
+td {
+   vertical-align: top;
+   padding: 4px;
+}
+
+pre {
+  background: #ccc;
+  padding: 12px;
+}
+
+p {
+    line-height: 125%;
+  }
+
+div[class~="lisp"] {
+    background: #DDD;
+    font-size: 12px;
+    padding: 12px;
+    margin: 4px;
+}
+
+div[class~="lisp"] > code > pre {
+ margin: 0px;
+}
+
+div[class~="lisp"] code[class~="results"] {
+  font-style: italic;
+}
+
+div[class~="doc"] {
+    border: solid green 1px;
+    margin: 4px;
+    padding: 2px;
+}
+
+div[class~="doc"] p {
+    margin: 4px;
+}
+
+div[class~="doc"] p[class~="doc-name"] {
+    font-weight: bold;
+}
+
+
+h3, h4 { text-decoration: underline; }
+a { text-decoration: none; padding: 1px 2px 1px 2px; }
+a:visited { text-decoration: none; padding: 1px 2px 1px 2px; }
+a:hover { text-decoration: none; padding: 1px 1px 1px 1px; border: 1px solid #000000; } 
+a:focus { text-decoration: none; padding: 1px 2px 1px 2px; border: none; }
+a.none { text-decoration: none; padding: 0; }
+a.none:visited { text-decoration: none; padding: 0; } 
+a.none:hover { text-decoration: none; border: none; padding: 0; } 
+a.none:focus { text-decoration: none; border: none; padding: 0; } 
+a.noborder { text-decoration: none; padding: 0; } 
+a.noborder:visited { text-decoration: none; padding: 0; } 
+a.noborder:hover { text-decoration: none; border: none; padding: 0; } 
+a.noborder:focus { text-decoration: none; border: none; padding: 0; }  
+pre.none { padding:5px; background-color:#ffffff }
+</style>
+</link>
 </head>
 <body><span><h1>Epigraph</h1>
 <p>Epigraph is relatively simple, small, and, hopefully,
