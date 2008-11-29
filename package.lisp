@@ -63,8 +63,10 @@
 
            #:bfs
            #:bfs-map
+           #:bfs-map-edges
            #:dfs
            #:dfs-map
+           #:dfs-map-edges
 
            #:simple-edge-list-graph
            #:first-node
