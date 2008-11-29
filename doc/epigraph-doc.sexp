@@ -105,25 +105,27 @@
   be undirected, although it is anticipated that support for directed
   edges will be added in the future.")
   
-  (:pre
-   (:code
-    #q{(defclass edge ()
+  (:list
+   (:item "[class] "
+     (:code "edge")
+     (:pre
+      (:code #q{(defclass edge ()
   ((node1 :accessor node1 :initarg :node1)
    (node2 :accessor node2 :initarg :node2)
    (data :accessor edge-data :initarg :data :initform nil))
   (:documentation "Instances of the EDGE class represent edges between
-  nodes in a graph."))}))
+  nodes in a graph."))}))))
   
   (:list
    (:item "[generic function] "
-        (:code "print-edge-data object stream => result")
-        (:p "Print data about the edge object. returns NIL if
+     (:code "print-edge-data object stream => result")
+     (:p "Print data about the edge object. returns NIL if
    stream is non-nil or a string containg the edge object data if
    stream is NIL."))
    
    (:item "[generic function] "
-        (:code "copy-edge edge => new-edge")
-        (:p "copy-edge makes a new instance of the same class as edge,
+     (:code "copy-edge edge => new-edge")
+     (:p "copy-edge makes a new instance of the same class as edge,
    new-edge, and sets the node1, node2 and data of new-edge to be the
    same as the respective values in edge. Returns new-edge. Subclasses
    of edge should specialize this function to copy additional data as
@@ -295,7 +297,7 @@
 
    (:item "[generic function] "
      (:a :name "generic-function:bfs"
-         (:code "bfs graph start end &key key test"))
+         (:code "bfs graph start end &key key test => (values)"))
      (:p "Performs a breadth-first search on graph starting at the
        start node and proceeding until the end value is found, if end
        is non-nil, or until all nodes have been searched if end is
@@ -305,20 +307,29 @@
        defaults to the graph-node-test value of the graph object."))
 
    (:item "[generic function] "
-     (:a :name "generic-function:bfs-map"
+     (:a :name "generic-function:bfs-map => (values)"
+         (:code "bfs-map graph start fn &key end key test"))
+     (:p ""))
+
+   (:item "[generic function] "
+     (:a :name "generic-function:bfs-map-edges => (values)"
          (:code "bfs-map graph start fn &key end key test"))
      (:p ""))
    
    (:item "[generic function] "
      (:a :name "generic-function:dfs"
-         (:code "dfs graph start end &key key test"))
+         (:code "dfs graph start end &key key test => (values)"))
      (:p ""))
    
    (:item "[generic function] "
      (:a :name "generic-function:dfs-map"
-         (:code "dfs-map graph start fn &key end key test"))
+         (:code "dfs-map graph start fn &key end key test => (values)"))
      (:p "")))
   
+  (:item "[generic function] "
+         (:a :name "generic-function:dfs-map-edges"
+             (:code "bfs-map graph start fn &key end key test => (values)"))
+         (:p ""))
 
   (:h3 "simple-edge-list-graph")
   
