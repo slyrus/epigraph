@@ -46,6 +46,7 @@
 
            #:add-node
            #:get-node
+           #:remove-node
            #:node-count
            #:copy-graph
            #:add-edge
@@ -69,4 +70,7 @@
            #:first-node
            
            #:find-cycle
-           #:find-cycles))
+           #:find-cycles
+           
+           #:remove-connected-component
+           #:find-connected-components))

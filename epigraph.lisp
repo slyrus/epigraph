@@ -88,11 +88,15 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (apply #'make-instance class (remove-keyword-args :class args)))
 
 (defgeneric copy-graph (graph &key copy-edges)
-  (:documentation "Returns a copy of the graph which will contain
-  copies of the edges, but the same nodes as the original graph."))
+  (:documentation "Returns a copy of the graph which will contain the
+  same nodes as the original graph and either the same edges as graph
+  or copies of the edges, depending on the value of &key copy-edges."))
 
 (defgeneric add-node (graph node)
   (:documentation "Add a node to the graph."))
+
+(defgeneric remove-node (graph node)
+  (:documentation "Remove a node from the graph."))
 
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
@@ -220,6 +224,25 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                (bfs-visit children)))))
       (bfs-visit (list start)))))
 
+(defmethod bfs-map-edges ((graph graph) start fn
+                          &key
+                          (end nil end-supplied-p)
+                          (key 'identity)
+                          (test (graph-node-test graph)))
+  (let ((visited-edges (make-hash-table :test 'eq)))
+    (apply #'bfs-map graph start
+           (lambda (node)
+             (map nil
+                  (lambda (edge)
+                    (unless (gethash edge visited-edges)
+                      (funcall fn edge)
+                      (setf (gethash edge visited-edges) edge)))
+                  (find-edges-containing graph node)))
+           (append
+            (when end-supplied-p `(:end ,end))
+            (when key `(:key ,key))
+            (when test `(:test ,test))))))
+
 (defmethod dfs ((graph graph) start end
                 &key
                 (key 'identity)
@@ -263,6 +286,24 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                         neighbors)))))
       (dfs-visit start nil))))
 
+(defmethod dfs-map-edges ((graph graph) start fn
+                          &key
+                          (end nil end-supplied-p)
+                          (key 'identity)
+                          (test (graph-node-test graph)))
+  (let ((visited-edges (make-hash-table :test 'eq)))
+    (apply #'dfs-map graph start
+           (lambda (node)
+             (map nil
+                  (lambda (edge)
+                    (unless (gethash edge visited-edges)
+                      (funcall fn edge)
+                      (setf (gethash edge visited-edges) edge)))
+                  (find-edges-containing graph node)))
+           (append
+            (when end-supplied-p `(:end ,end))
+            (when key `(:key ,key))
+            (when test `(:test ,test))))))
 ;;;
 ;;; Alternative implementation of bfs and dfs, using a more general
 ;;; graph-search routine and a q class that can accept new items at
@@ -363,6 +404,14 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (unless (graph-node-p graph node)
     (progn
       (setf (gethash node (graph-node-hash graph)) node)))
+  node)
+
+;;; FIXME! What do we do if we try to remove a node which still has edges containing it?
+;;; 1. Remove the node and leave the edges?
+;;; 2. Remove the edges and remove the node?
+;;; 3. Throw an error?
+(defmethod remove-node ((graph simple-edge-list-graph) node)
+  (remhash node (graph-node-hash graph))
   node)
 
 (defmacro with-graph-iterator ((function graph) &body body)
@@ -545,4 +594,32 @@ removed."
          (remove-edge graph (car edge-path)))
     (when cycle-edges
       (apply #'values (append (apply #'mapcar #'list cycle-edges) (list graph))))))
+
+(defun remove-connected-component (graph &key (start (first-node graph)))
+  (let ((new-graph
+         (make-instance (class-of graph)
+                        :node-test (graph-node-test graph)))
+        edges-to-remove
+        nodes-to-remove)
+    (bfs-map-edges graph start
+                   (lambda (edge)
+                     (add-node new-graph (node1 edge))
+                     (add-node new-graph (node2 edge))
+                     (add-edge new-graph edge)
+                     (pushnew edge edges-to-remove)
+                     (pushnew (node1 edge) nodes-to-remove)
+                     (pushnew (node2 edge) nodes-to-remove)))
+    (map nil (lambda (edge) (remove-edge graph edge))
+         edges-to-remove)
+    (map nil (lambda (node) (remove-node graph node))
+         nodes-to-remove)
+    (when (first-node new-graph)
+      new-graph)))
+
+(defun find-connected-components (graph &key (start (first-node graph)))
+  (let ((orig-copy (copy-graph graph)))
+    (loop for node = start then (first-node orig-copy)
+       for component = (remove-connected-component orig-copy :start node)
+       while component
+       collect component)))
 
