@@ -150,6 +150,11 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Calls FN on every node in the graph, without regard
   to the configuration of the graph."))
 
+(defgeneric map-nodes->list (graph fn)
+  (:documentation "Calls FN on every node in the graph, without regard
+  to the configuration of the graph and returns the resulting values
+  in a list."))
+
 (defgeneric bfs (graph start end &key key test)
   (:documentation "Performs a breadth-first-search on graph starting
   at start and returns a path end if end is reachable from start,
@@ -443,6 +448,14 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
              (funcall fn k))
            (graph-node-hash graph)))
 
+(defmethod map-nodes->list ((graph simple-edge-list-graph) fn)
+  (let (l)
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (push (funcall fn k) l))
+             (graph-node-hash graph))
+    l))
+
 (defmethod graph-edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))
 
@@ -601,6 +614,8 @@ removed."
                         :node-test (graph-node-test graph)))
         edges-to-remove
         nodes-to-remove)
+    (add-node new-graph start)
+    (push start nodes-to-remove)
     (bfs-map-edges graph start
                    (lambda (edge)
                      (add-node new-graph (node1 edge))
