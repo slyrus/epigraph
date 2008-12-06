@@ -44,41 +44,47 @@
 
 (defparameter *big-graph* (graph:make-graph :node-test 'equal))
 
-(defun test-me ()
-  (print 'ok)
-  (loop for i below 500
-     do (add-node *big-graph* (princ-to-string i)))
-  (loop for i below 499
-     do (add-edge-between-nodes *big-graph* (princ-to-string i) (princ-to-string (1+ i))))
-  (loop for i below 6000
-     for j = (random 500)
-     for k  = (random 500)
-     do 
-       #+nil (print (cons j k))
-       (add-edge-between-nodes *big-graph* (princ-to-string j) (princ-to-string k))))
+(defun large-graph-test ()
+  (let ((g (make-graph :node-test 'equal)))
+    (loop for i below 500
+       do (add-node g (princ-to-string i)))
+    (loop for i below 499
+       do (add-edge-between-nodes g
+                                  (princ-to-string i)
+                                  (princ-to-string (1+ i))))
+    (loop for i below 6000
+       for j = (random 500)
+       for k  = (random 500)
+       do (add-edge-between-nodes g
+                                  (princ-to-string j)
+                                  (princ-to-string k)))
+    g))
 
-(test-me)
+(defun large-graph-test-2 ()
+  (let ((g (make-graph)))
+    (loop for i below 500
+       do (add-node g i))
+    (loop for i below 499
+       do (add-edge-between-nodes g i (1+ i)))
+    (loop for i below 6000
+       for j = (random 500)
+       for k  = (random 500)
+       do (add-edge-between-nodes g j k))
+    g))
 
-(time
- (graph:bfs *big-graph*
-                "1"
-                "408"))
+(defun graph-search-routines-benchmark (&optional (g (large-graph-test)))
+  (time
+   (graph:bfs g "1" "408"))
+  (time
+   (graph:dfs g "1" "408"))
+  g)
 
-(time
- (graph:dfs *big-graph*
-                "1"
-                "408"))
-
-
-(let ((g (make-graph)))
-  (let ((n1 (add-node g "n1"))
-        (n2 (add-node g "n2")))
-    (let ((components (find-connected-components g)))
-      (assert (null (set-difference (mapcar #'graph-nodes components)
-                                    '(("n1") ("n2"))
-                                    :test #'equal)))
-      (assert  (equal (mapcar #'graph-edges components)
-                      (list nil nil))))))
+(defun graph-search-routines-benchmark-2 (&optional (g (large-graph-test-2)))
+  (time
+   (graph:bfs g 1 408))
+  (time
+   (graph:dfs g 1 408))
+  g)
 
 (let ((g (make-graph)))
   (let ((n1 (add-node g "n1"))
