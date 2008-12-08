@@ -34,6 +34,7 @@
   (:export #:edge
            #:node1
            #:node2
+           #:edge-nodes
            #:edge-data
            #:*default-edge-class*
            #:print-edge-data

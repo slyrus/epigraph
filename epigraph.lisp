@@ -61,6 +61,9 @@
                    :data (edge-data edge)))
   (:documentation "Returns a copy of the edge."))
 
+(defgeneric edge-nodes (edge)
+  (:method ((edge edge))
+    (list (node1 edge) (node2 edge))))
 
 ;;;
 ;;; graphs and generic functions for operating on graphs
@@ -508,12 +511,19 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                          (cons (node1 x) (node2 x)))
                   :test 'equalp))))
 
+;;; FIXME! Should edgep check both (node1 . node2) and (node2 . node1)
+;;; or should we just check the former???
 (defmethod edgep ((graph simple-edge-list-graph) node1 node2)
-  (find (cons node1 node2)
-        (graph-edges graph)
-        :key (lambda (x)
-               (cons (node1 x) (node2 x)))
-        :test 'equalp))
+  (find-if
+   (lambda (edge)
+     (let ((edge-cons (cons (node1 edge) (node2 edge))))
+       (or (equal edge-cons (cons node1 node2))
+           (equal edge-cons (cons node2 node1)))))
+   (graph-edges graph)))
+
+(defmethod find-edge ((graph simple-edge-list-graph) node1 node2)
+  (or (edgep graph node1 node2)
+      (edgep graph node2 node1)))
 
 (defmethod find-edges-from ((graph simple-edge-list-graph) node
                             &key (test (graph-node-test graph)))
@@ -540,9 +550,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
          (apply #'find-edges-to graph node
                 (when test `(:test ,test)))))
 
-(defmethod neighbors (graph element
+(defmethod neighbors (graph node
                       &key (test (graph-node-test graph))) 
-  (let ((edges (apply #'find-edges-containing graph element
+  (let ((edges (apply #'find-edges-containing graph node
                       (when test `(:test ,test)))))
     (let ((neighbors
            (union (map (type-of edges) #'node1 edges)
@@ -550,7 +560,18 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                   :test test)))
       (if (find-self-edges graph test)
           neighbors
-          (remove element neighbors :test test)))))
+          (remove node neighbors :test test)))))
+
+(defmethod neighbors-and-edges (graph node
+                                &key (test (graph-node-test graph))) 
+  (let ((edges (apply #'find-edges-containing graph node
+                      (when test `(:test ,test)))))
+    (apply #'mapcar #'list (loop for edge in edges
+                      append (cond ((not (funcall test node (node1 edge)))
+                                    (list (list (node1 edge) edge)))
+                                   ((not (funcall test node (node2 edge)))
+                                    (list (list (node2 edge) edge)))
+                                   (t nil))))))
 
 (defun find-cycle (graph
                    &key (start (first-node graph))
@@ -591,22 +612,33 @@ the nodes in the cycle."
                       edges))))
       (visit start nil nil))))
 
-(defun find-cycles (graph &key (start (first-node graph)))
-  "Finds all of the cycles in a graph and returns three VALUEs, a list
+(defun find-cycles (graph
+                    &key
+                    (start (first-node graph))
+                    (pick-function (lambda (x y)
+                                     (declare (ignore y))
+                                     x)))
+  "Finds all of the cycles in a graph and returns four VALUEs, a list
 of the edges that make complete the cycles, a list of the paths that
-form the cycles, and a copy of GRAPH, with the cycle-forming edges
-removed."
+form the cycles, a list of the cycle-forming edges, and a copy of
+GRAPH, with the cycle-forming edges removed."
   (let ((graph (copy-graph graph :copy-edges t))
-        (cycle-edges))
+        cycle-edges
+        removed-edges)
     (loop for (edge-path node-path) = (multiple-value-list
                                        (apply 'find-cycle graph
                                               (when start `(:start ,start))))
        while edge-path
        do
          (push (list edge-path node-path) cycle-edges)
-         (remove-edge graph (car edge-path)))
+         (let ((removed (funcall pick-function
+                                 (car edge-path)
+                                 (car (last edge-path)))))
+           (remove-edge graph removed)
+           (push removed removed-edges)))
     (when cycle-edges
-      (apply #'values (append (apply #'mapcar #'list cycle-edges) (list graph))))))
+      (apply #'values (append (apply #'mapcar #'list cycle-edges)
+                              (list removed-edges graph))))))
 
 (defun remove-connected-component (graph &key (start (first-node graph)))
   (let ((new-graph
