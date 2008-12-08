@@ -36,6 +36,8 @@
            #:node2
            #:edge-nodes
            #:edge-data
+           #:other-edge-node
+           #:edges-nodes-equal
            #:*default-edge-class*
            #:print-edge-data
            #:copy-edge

@@ -70,6 +70,10 @@
     (and (funcall test (node1 edge1) (node1 edge2))
          (funcall test (node2 edge1) (node2 edge2)))))
 
+(defgeneric other-edge-node (edge node)
+  (:method ((edge edge) node)
+    (car (remove node (edge-nodes edge)))))
+
 ;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
