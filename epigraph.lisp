@@ -65,6 +65,11 @@
   (:method ((edge edge))
     (list (node1 edge) (node2 edge))))
 
+(defgeneric edges-nodes-equal (edge1 edge2 &key test)
+  (:method ((edge1 edge) (edge2 edge) &key (test 'eql))
+    (and (funcall test (node1 edge1) (node1 edge2))
+         (funcall test (node2 edge1) (node2 edge2)))))
+
 ;;;
 ;;; graphs and generic functions for operating on graphs
 (defclass graph ()
