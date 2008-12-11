@@ -63,6 +63,7 @@
            #:neighbors
            
            #:map-nodes
+           #:map-nodes->list
 
            #:bfs
            #:bfs-map
@@ -75,7 +76,8 @@
            #:first-node
            
            #:find-cycle
-           #:find-cycles
+           #:find-cycle-edges
+           #:break-cycles
            
            #:remove-connected-component
            #:find-connected-components))

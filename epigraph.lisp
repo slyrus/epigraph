@@ -158,11 +158,11 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Returns a list of the nodes that are connected to
   node."))
 
-(defgeneric map-nodes (graph fn)
+(defgeneric map-nodes (fn graph)
   (:documentation "Calls FN on every node in the graph, without regard
   to the configuration of the graph."))
 
-(defgeneric map-nodes->list (graph fn)
+(defgeneric map-nodes->list (fn graph)
   (:documentation "Calls FN on every node in the graph, without regard
   to the configuration of the graph and returns the resulting values
   in a list."))
@@ -454,13 +454,13 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
              (graph-node-hash graph))
     l))
 
-(defmethod map-nodes ((graph simple-edge-list-graph) fn)
+(defmethod map-nodes (fn (graph simple-edge-list-graph))
   (maphash (lambda (k v)
              (declare (ignore v))
              (funcall fn k))
            (graph-node-hash graph)))
 
-(defmethod map-nodes->list ((graph simple-edge-list-graph) fn)
+(defmethod map-nodes->list (fn (graph simple-edge-list-graph))
   (let (l)
     (maphash (lambda (k v)
                (declare (ignore v))
@@ -591,7 +591,6 @@ the nodes in the cycle."
   (let ((traversed-edges (make-hash-table))
         (visited-nodes (make-hash-table :test test)))
     (labels ((visit (node node-path edge-path)
-               
                (setf (gethash node visited-nodes) node)
                (let ((edges (find-edges-containing graph node)))
                  (map nil
@@ -621,12 +620,31 @@ the nodes in the cycle."
                       edges))))
       (visit start nil nil))))
 
-(defun find-cycles (graph
-                    &key
-                    (start (first-node graph))
-                    (pick-function (lambda (x y)
-                                     (declare (ignore y))
-                                     x)))
+(defun find-cycle-edges (graph
+                         &key
+                         (start (first-node graph))
+                         (test (graph-node-test graph)))
+  (let ((visited-nodes (make-hash-table :test test))
+        cycle-edges)
+    (labels ((dfs-visit (node path)
+               (setf (gethash node visited-nodes) node)
+               (let ((neighbors (neighbors graph node)))
+                 (map nil
+                      (lambda (x)
+                        (cond ((funcall test x (car path)))
+                              ((gethash x visited-nodes)
+                               (push x cycle-edges))
+                              (t (dfs-visit x (cons node path)))))
+                      neighbors))))
+      (dfs-visit start nil))
+    cycle-edges))
+
+(defun break-cycles (graph
+                     &key
+                     (start (first-node graph))
+                     (pick-function (lambda (x y)
+                                      (declare (ignore y))
+                                      x)))
   "Finds all of the cycles in a graph and returns four VALUEs, a list
 of the edges that make complete the cycles, a list of the paths that
 form the cycles, a list of the cycle-forming edges, and a copy of

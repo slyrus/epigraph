@@ -1,0 +1,11 @@
+
+API Changes:
+
+2008.12.11 map-nodes argument order change
+
+* map-nodes and map-nodes->list now take fn as the first argument,
+  rather than the second, to match the way map, mapcar,
+  etc... work. This is an incompatible API change and all calls to
+  map-nodes or map-nodes->list will need to be updated to reflect this
+  change to the API.
+
