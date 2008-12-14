@@ -31,6 +31,8 @@
 
   (:h1 "Contents:")
 
+  (:h2 "Concepts")
+
   (:h2 "Dictionary")
   (:list
    (:item (:a :href "#parameter:*default-graph-class*"
@@ -96,6 +98,27 @@
    (edgep *graph* "Node 1" "Node 2")
    (bfs *graph* "Node 1" "Node 11")}))
   
+  (:h1 "Concepts")
+  
+  (:h2 "No explicit node class")
+
+  (:p "One of the ideas behind epigraph is that anything can be a
+  node. Nodes in graphs are not required to be instances of a class or
+  subclass of an explict node class. Hence, we can use arbitrary lisp
+  values as nodes in graphs. By allowing arbitrary lisp values as
+  nodes in the graph we need to make some decisions about how to
+  represent and search for nodes in a graph. Let's take the example of
+  finding a node in a graph. If we used an explicit node class, we
+  could search the nodes in the graph to find the node that was the
+  same object as the node we were searching for, using the lisp notion
+  of equality (EQ) for objects. By allowing arbitrary lisp values, we
+  need to consider what to do for things like strings, where there is
+  not an explicit object, but rather a lisp value, and bear in mind
+  that two strings that contain the same characters in the same order
+  are not necessarily EQ. Therefore, we're going to need a test
+  function to use to compare objects. Alternatively, we could just use
+  EQUAL.")
+
   (:h1 "Dictionary")
   
   (:h2 "Edges")

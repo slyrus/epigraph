@@ -63,16 +63,25 @@
 
 (defgeneric edge-nodes (edge)
   (:method ((edge edge))
-    (list (node1 edge) (node2 edge))))
+    (list (node1 edge) (node2 edge)))
+  (:documentation "Returns a list of the nodes connected by edge."))
 
 (defgeneric edges-nodes-equal (edge1 edge2 &key test)
   (:method ((edge1 edge) (edge2 edge) &key (test 'eql))
     (and (funcall test (node1 edge1) (node1 edge2))
-         (funcall test (node2 edge1) (node2 edge2)))))
+         (funcall test (node2 edge1) (node2 edge2))))
+  (:documentation "Returns T if the two edges connect the same
+  nodes. Note that currently there is no notion of direction between
+  edges, so edges from A to B and from B to A are equivalent and
+  therefore edges-nodes-equal returns T for those two edges."))
 
 (defgeneric other-edge-node (edge node)
   (:method ((edge edge) node)
-    (car (remove node (edge-nodes edge)))))
+    (when (member node (edge-nodes edge) :test 'equal)
+      (car (remove node (edge-nodes edge) :count 1 :test 'equal))))
+  (:documentation "Returns the other node in the edge. That is if
+  there is an edge between A and B, other-edge-node of A would return
+  B. If the edge is a self-edge, returns node."))
 
 ;;;
 ;;; graphs and generic functions for operating on graphs
@@ -120,8 +129,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Adds an edge to the graph."))
 
 (defgeneric add-edge-between-nodes (graph node1 node2 &key edge-class)
-  (:documentation "Creates a node from node1 to node2 and adds it to
-  the graph.."))
+  (:documentation "Creates an edge from node1 to node2, adds it to
+  the graph, and returns the edge."))
 
 (defgeneric remove-edge (graph edge &key test)
   (:documentation "Removes edge from the graph."))
@@ -489,7 +498,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
     (error "Node ~A not in graph ~A" (node1 edge) graph))
   (unless (graph-node-p graph (node2 edge))
     (error "Node ~A not in graph ~A" (node2 edge) graph))
-  (push edge (graph-edge-list graph)))
+  (push edge (graph-edge-list graph))
+  edge)
 
 (defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
                                    node1 node2
@@ -501,7 +511,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (let ((edge (make-instance edge-class
                              :node1 node1
                              :node2 node2)))
-    (push edge (graph-edge-list graph))))
+    (push edge (graph-edge-list graph))
+    edge))
 
 (defmethod remove-edge ((graph simple-edge-list-graph) (edge edge)
                         &key (test (graph-node-test graph)))

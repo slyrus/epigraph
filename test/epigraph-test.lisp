@@ -31,7 +31,7 @@
 (in-package :epigraph-test)
 
 (defparameter *graph* 
-  (let ((g (make-graph)))
+  (let ((g (make-graph :node-test 'equal)))
     (let ((n1 (add-node g "n1"))
           (n2 (add-node g "n2")))
       (add-edge-between-nodes g n1 n2)
@@ -136,3 +136,47 @@
                                             components)
                                     '(("n1" "n2") ("n3" "n4"))
                                     :test #'equal))))))
+
+;;; edge tests
+
+;;; add-edge-between-nodes and edgep
+(let ((g (make-graph :node-test 'equal)))
+  (let ((n1 (add-node g "n1"))
+        (n2 (add-node g "n2")))
+    (let ((edge (add-edge-between-nodes g n1 n2)))
+      (assert (edgep g n1 n2))
+      (assert (edgep g "n1" "n2"))
+      (assert (edgep g n1 "n2"))
+      (assert (null (set-difference (edge-nodes edge)
+                                    (list n1 n2))))))
+  g)
+
+;;; remove-edge
+(let ((g (make-graph :node-test 'equal)))
+  (let ((n1 (add-node g "n1"))
+        (n2 (add-node g "n2")))
+    (let ((edge (add-edge-between-nodes g n1 n2)))
+      (assert (edgep g n1 n2))
+      (assert (null (set-difference (edge-nodes edge)
+                                    (list n1 n2))))
+      (remove-edge g edge)
+      (assert (null (edgep g n1 n2)))))
+  g)
+
+;;; other-edge-node
+(let ((g (make-graph :node-test 'equal)))
+  (let ((n1 (add-node g "n1"))
+        (n2 (add-node g "n2")))
+    (let ((edge (add-edge-between-nodes g n1 n2)))
+      (assert (eq n2 (other-edge-node edge n1)))
+      (assert (eq n1 (other-edge-node edge n2)))
+      (assert (eq n2 (other-edge-node edge "n1")))
+      (assert (equal "n2" (other-edge-node edge n1)))
+      (assert (equal "n2" (other-edge-node edge "n1")))
+
+      ;; make sure we return null for objects that aren't in the graph
+      ;; -- or should we error here?
+      (assert (null (other-edge-node edge g)))))
+  g)
+
+

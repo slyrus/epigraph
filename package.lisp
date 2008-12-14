@@ -55,6 +55,7 @@
            #:add-edge
            #:add-edge-between-nodes
            #:remove-edge
+           #:remove-edge-between-nodes
            #:edgep
            #:graph-edges
            #:find-edges-from
