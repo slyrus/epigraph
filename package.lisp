@@ -64,12 +64,15 @@
            #:find-edges-containing
            #:neighbors
            
+           #:node-position
            #:node-find
            #:node-remove
            #:node-equal
 
            #:map-nodes
            #:map-nodes->list
+           #:map-edges
+           #:map-edges->list
 
            #:bfs
            #:bfs-map

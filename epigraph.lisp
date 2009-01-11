@@ -98,19 +98,26 @@
 ;; (defclass undirected-graph (graph) ())
 ;; (defclass digraph (graph) ())
 
-(defun node-position (graph item sequence 
-                      &key from-end (start 0) end key 
+(defun node-position (graph item sequence
+                      &key from-end (start 0) end key
                       (test (graph-node-test graph)) test-not)
   (position item sequence
             :from-end from-end :start start :end end :key key
             :test test :test-not test-not))
 
-(defun node-find (graph item sequence 
-                  &key from-end (start 0) end key 
+(defun node-find (graph item sequence
+                  &key from-end (start 0) end key
                   (test (graph-node-test graph)) test-not)
   (find item sequence
         :from-end from-end :start start :end end :key key
         :test test :test-not test-not))
+
+(defun node-remove (graph item sequence 
+                    &key from-end (start 0) end key count
+                    (test (graph-node-test graph)) test-not)
+  (remove item sequence
+          :from-end from-end :start start :end end :key key :count count
+          :test test :test-not test-not))
 
 (defun node-equal (graph node1 node2
                   &key (test (graph-node-test graph)))
@@ -502,6 +509,13 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod graph-edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))
+
+(defmethod map-edges (fn (graph simple-edge-list-graph))
+  (map nil fn (graph-edges graph)))
+
+(defmethod map-edges->list (fn (graph simple-edge-list-graph))
+  (map 'list fn (graph-edges graph)))
+
 
 (defmethod copy-graph ((graph simple-edge-list-graph) &key copy-edges)
   (let ((new (make-instance (class-of graph))))
