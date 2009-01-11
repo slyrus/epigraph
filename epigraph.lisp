@@ -67,7 +67,7 @@
   (:documentation "Returns a list of the nodes connected by edge."))
 
 (defgeneric edges-nodes-equal (edge1 edge2 &key test)
-  (:method ((edge1 edge) (edge2 edge) &key (test 'eql))
+  (:method ((edge1 edge) (edge2 edge) &key (test 'equal))
     (and (funcall test (node1 edge1) (node1 edge2))
          (funcall test (node2 edge1) (node2 edge2))))
   (:documentation "Returns T if the two edges connect the same
@@ -111,6 +111,10 @@
   (find item sequence
         :from-end from-end :start start :end end :key key
         :test test :test-not test-not))
+
+(defun node-equal (graph node1 node2
+                  &key (test (graph-node-test graph)))
+  (funcall test node1 node2))
 
 #+nil
 (defun node-member (graph item list
@@ -581,6 +585,10 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (remove-if-not (lambda (x)
                    (funcall test (node1 x) (node2 x)))
                  (graph-edges graph)))
+
+(defmethod self-edge-p ((graph simple-edge-list-graph) edge
+                        &key (test (graph-node-test graph)))
+  (funcall test (node1 edge) (node2 edge)))
 
 (defmethod find-edges-containing ((graph simple-edge-list-graph) node
                                   &key (test (graph-node-test graph)))

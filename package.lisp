@@ -41,7 +41,7 @@
            #:*default-edge-class*
            #:print-edge-data
            #:copy-edge
-           
+
            #:graph
            #:graph-nodes
            #:make-graph
@@ -57,12 +57,17 @@
            #:remove-edge
            #:remove-edge-between-nodes
            #:edgep
+           #:self-edge-p
            #:graph-edges
            #:find-edges-from
            #:find-edges-to
            #:find-edges-containing
            #:neighbors
            
+           #:node-find
+           #:node-remove
+           #:node-equal
+
            #:map-nodes
            #:map-nodes->list
 
