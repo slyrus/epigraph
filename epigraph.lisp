@@ -98,6 +98,25 @@
 ;; (defclass undirected-graph (graph) ())
 ;; (defclass digraph (graph) ())
 
+(defun node-position (graph item sequence 
+                      &key from-end (start 0) end key 
+                      (test (graph-node-test graph)) test-not)
+  (position item sequence
+            :from-end from-end :start start :end end :key key
+            :test test :test-not test-not))
+
+(defun node-find (graph item sequence 
+                  &key from-end (start 0) end key 
+                  (test (graph-node-test graph)) test-not)
+  (find item sequence
+        :from-end from-end :start start :end end :key key
+        :test test :test-not test-not))
+
+#+nil
+(defun node-member (graph item list
+                    &key key (test (graph-node-test graph)) test-not)
+  (member item list :key key :test test :test-not test-not))
+
 (defparameter *default-graph-class* 'simple-edge-list-graph)
 (defparameter *default-edge-class* 'edge)
 
