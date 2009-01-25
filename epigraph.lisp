@@ -123,6 +123,9 @@
                   &key (test (graph-node-test graph)))
   (funcall test node1 node2))
 
+(defun make-node-hash-table (graph)
+  (make-hash-table :test (graph-node-test graph)))
+
 #+nil
 (defun node-member (graph item list
                     &key key (test (graph-node-test graph)) test-not)
