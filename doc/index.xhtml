@@ -2,8 +2,9 @@
 <!DOCTYPE html 
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><title>epigraph: A library for representing and processing graphs,
-  nodges and edges.</title>
-<link rel="stylesheet" type="text/css" href="simple.css"><style>
+  nodes and edges.</title>
+<link rel="stylesheet" type="text/css" href="simple.css"/><style>
+
 body {
     color: #333;
     background-color: #FFF;
@@ -112,7 +113,7 @@ div[class~="lisp"] {
     margin: 4px;
 }
 
-div[class~="lisp"] &gt; code &gt; pre {
+div[class~="lisp"] > code > pre {
  margin: 0px;
 }
 
@@ -150,7 +151,6 @@ a.noborder:hover { text-decoration: none; border: none; padding: 0; }
 a.noborder:focus { text-decoration: none; border: none; padding: 0; }  
 pre.none { padding:5px; background-color:#ffffff }
 </style>
-</link>
 </head>
 <body><span><h1>Epigraph</h1>
 <p>Epigraph is relatively simple, small, and, hopefully,
@@ -166,6 +166,7 @@ pre.none { padding:5px; background-color:#ffffff }
 <p>Epigraph is still in its early stages of development and the
   API may still change drastically.</p>
 <h1>Contents:</h1>
+<h2>Concepts</h2>
 <h2>Dictionary</h2>
 <ul><li><a href="#parameter:*default-graph-class*">*default-graph-class*</a>
 </li>
@@ -241,6 +242,24 @@ pre.none { padding:5px; background-color:#ffffff }
    (edgep *graph* "Node 1" "Node 2")
    (bfs *graph* "Node 1" "Node 11")</code>
 </pre>
+<h1>Concepts</h1>
+<h2>No explicit node class</h2>
+<p>One of the ideas behind epigraph is that anything can be a
+  node. Nodes in graphs are not required to be instances of a class or
+  subclass of an explict node class. Hence, we can use arbitrary lisp
+  values as nodes in graphs. By allowing arbitrary lisp values as
+  nodes in the graph we need to make some decisions about how to
+  represent and search for nodes in a graph. Let's take the example of
+  finding a node in a graph. If we used an explicit node class, we
+  could search the nodes in the graph to find the node that was the
+  same object as the node we were searching for, using the lisp notion
+  of equality (EQ) for objects. By allowing arbitrary lisp values, we
+  need to consider what to do for things like strings, where there is
+  not an explicit object, but rather a lisp value, and bear in mind
+  that two strings that contain the same characters in the same order
+  are not necessarily EQ. Therefore, we're going to need a test
+  function to use to compare objects. Alternatively, we could just use
+  EQUAL.</p>
 <h1>Dictionary</h1>
 <h2>Edges</h2>
 <p>Instances of the <code>EDGE</code>
