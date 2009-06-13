@@ -1,7 +1,7 @@
 ;;; file: epigraph.lisp
 ;;; author: cyrus harmon
 ;;;
-;;; Copyright (c) 2008 Cyrus Harmon (ch-lisp@bobobeach.com)
+;;; Copyright (c) 2008-2009 Cyrus Harmon (ch-lisp@bobobeach.com)
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
