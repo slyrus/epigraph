@@ -3,7 +3,7 @@
    "Copyright 2008, Cyrus Harmon. All Rights Reserved. See COPYRIGHT
   file for details")
   (:title "epigraph: A library for representing and processing graphs,
-  nodges and edges.")
+  nodes and edges.")
   (:author "Cyrus L. Harmon"))
  (:html-metadata (:htmlcss #.(ch-asdf:asdf-lookup-path
                               "asdf:/epigraph-doc/doc/simple-css")
