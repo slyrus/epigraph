@@ -10,9 +10,7 @@
 (defsystem :epigraph-doc
   :name "epigraph-doc"
   :author "Cyrus Harmon" 
-  :version #.(with-open-file
-                 (vers (merge-pathnames "version.lisp-expr" *load-truename*))
-               (read vers))
+  :version "0.0.2"
   :depends-on (ch-asdf smarkup)
   :components
   ((:module

@@ -2,9 +2,7 @@
 (asdf:defsystem :epigraph-test
     :name "epigraph-test"
     :author "Cyrus Harmon <ch-lisp@bobobeach.com>"
-    :version #.(with-open-file
-                   (vers (merge-pathnames "version.lisp-expr" *load-truename*))
-                 (read vers))
+    :version "0.0.2"
     :licence "BSD"
     :depends-on (epigraph)
     :components
