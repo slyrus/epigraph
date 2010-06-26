@@ -752,3 +752,27 @@ GRAPH, with the cycle-forming edges removed."
        while component
        collect component)))
 
+(defun find-longest-paths (graph)
+  "Finds a longest path acecssible from each node in the
+graph. Returns a list of vectors containing the longest paths for each
+node. Each vector represents the path to the farthest node from the
+first node of the vector to the last node of the vector."
+  (mapcar (lambda (start-node)
+            (let ((depth 0) deepest path)
+              (dfs-map graph
+                       start-node
+                       (lambda (node)
+                         (if (> *dfs-depth* depth)
+                             (setf deepest node
+                                   depth *dfs-depth*
+                                   path (cons node path)))))
+              (make-array (length path) :initial-contents (nreverse path))))
+          (graph-nodes graph)))
+
+(defun find-longest-path (graph)
+  "Returns a single vector containing a longest path reachable from
+any node in graph. The vector contains the elements in path order,
+starting with the first node and ending in the most distant node on
+the path."
+  (elt (sort (find-longest-paths graph) #'> :key #'length) 0))
+

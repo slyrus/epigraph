@@ -89,4 +89,7 @@
            #:break-cycles
            
            #:remove-connected-component
-           #:find-connected-components))
+           #:find-connected-components
+
+           #:find-longest-paths
+           #:find-longest-path))
