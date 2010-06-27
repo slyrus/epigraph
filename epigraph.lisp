@@ -562,23 +562,21 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                 :test test)))
 
 (defmethod remove-edge-between-nodes ((graph simple-edge-list-graph)
-                        node1 node2)
-  (let ((edge (cons node1 node2)))
-    (setf (graph-edge-list graph)
-          (remove edge
-                  (graph-edge-list graph)
-                  :key (lambda (x)
-                         (cons (node1 x) (node2 x)))
-                  :test 'equalp))))
+                                      node1 node2)
+  (let ((edge (edgep graph node1 node2)))
+    (when edge
+      (setf (graph-edge-list graph)
+            (remove edge (graph-edge-list graph))))))
 
 ;;; FIXME! Should edgep check both (node1 . node2) and (node2 . node1)
 ;;; or should we just check the former???
 (defmethod edgep ((graph simple-edge-list-graph) node1 node2)
   (find-if
    (lambda (edge)
-     (let ((edge-cons (cons (node1 edge) (node2 edge))))
-       (or (equal edge-cons (cons node1 node2))
-           (equal edge-cons (cons node2 node1)))))
+     (or (and (equal (node1 edge) node1)
+              (equal (node2 edge) node2))
+         (and (equal (node2 edge) node1)
+              (equal (node1 edge) node2))))
    (graph-edges graph)))
 
 (defmethod find-edge ((graph simple-edge-list-graph) node1 node2)
