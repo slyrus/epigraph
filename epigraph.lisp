@@ -784,20 +784,6 @@ node1 is node2, the distance is 0."
     (when path
       (1- (length path)))))
 
-;;; slow version
-#+nil
-(defun graph-distance-matrix-slow (graph)
-  (let* ((nodes (reverse (graph-nodes graph)))
-         (num-nodes (length nodes)))
-    (let ((distance (make-array (list num-nodes num-nodes))))
-      (loop for node1 in nodes
-         for i from 0
-         do (loop for node2 in nodes
-               for j from 0
-               do (setf (aref distance i j)
-                        (graph:graph-distance graph node1 node2))))
-      (values distance nodes))))
-
 ;;; faster graph-distance-matrix that uses dfs-map and the *dfs-depth* special variable
 (defun graph-distance-hash-table (graph)
   "Returns a hash-table where each value is another hash-table, where
