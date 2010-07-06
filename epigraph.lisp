@@ -778,7 +778,8 @@ the path."
   (elt (sort (find-longest-paths graph) #'> :key #'length) 0))
 
 (defun graph-distance (graph node1 node2)
-  "Returns the (shortest) number of edges between node1 and node2. If node1 is node2, the distance is 0."
+  "Returns the (shortest) number of edges between node1 and node2. If
+node1 is node2, the distance is 0."
   (let ((path (graph:bfs graph node1 node2)))
     (when path
       (1- (length path)))))
@@ -799,7 +800,9 @@ the path."
 
 ;;; faster graph-distance-matrix that uses dfs-map and the *dfs-depth* special variable
 (defun graph-distance-hash-table (graph)
-  "Returns a hash-table where each value is another hash-table, where each value is the distance from the node that is the key of the first hash-table to the node that is the key of the second hash-table."
+  "Returns a hash-table where each value is another hash-table, where
+each value is the distance from the node that is the key of the first
+hash-table to the node that is the key of the second hash-table."
   (let ((outer-hash (make-hash-table :test 'eq)))
     (map-nodes
      (lambda (node1)
