@@ -94,4 +94,5 @@
            #:find-longest-paths
            #:find-longest-path
            #:graph-distance
+           #:graph-distance-hash-table
            #:graph-distance-matrix))

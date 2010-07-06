@@ -798,11 +798,8 @@ the path."
       (values distance nodes))))
 
 ;;; faster graph-distance-matrix that uses dfs-map and the *dfs-depth* special variable
-(defun graph-distance-matrix (graph)
-  "Returns two values, an array where each entry i,j is the distance
-from node i to node j (distance from a node to itself is 0) and an
-array of nodes in the order corresponding to a dimension of the array
-of distances."
+(defun graph-distance-hash-table (graph)
+  "Returns a hash-table where each value is another hash-table, where each value is the distance from the node that is the key of the first hash-table to the node that is the key of the second hash-table."
   (let ((outer-hash (make-hash-table :test 'eq)))
     (map-nodes
      (lambda (node1)
@@ -814,6 +811,14 @@ of distances."
          (setf (gethash node1 outer-hash)
                inner-hash)))
      graph)
+    outer-hash))
+
+(defun graph-distance-matrix (graph)
+  "Returns two values, an array where each entry i,j is the distance
+from node i to node j (distance from a node to itself is 0) and an
+array of nodes in the order corresponding to a dimension of the array
+of distances."
+  (let ((outer-hash  (graph-distance-hash-table graph)))
     (let* ((nodes (loop for k being the hash-keys of outer-hash collect k))
            (num-nodes (length nodes))
            (node-array (make-array num-nodes :initial-contents nodes)))
