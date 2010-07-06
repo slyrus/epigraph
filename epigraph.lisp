@@ -256,6 +256,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                (bfs-visit children)))))
       (bfs-visit (list (cons start nil))))))
 
+(defparameter *bfs-depth* nil)
+
 (defmethod bfs-map ((graph graph) start fn
                     &key
                     (end nil end-supplied-p)
@@ -263,8 +265,9 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                     (test (graph-node-test graph)))
   (let ((visited-nodes (make-hash-table :test test)))
     (labels
-        ((bfs-visit (node-list)
-           (let (children)
+        ((bfs-visit (node-list level)
+           (let ((*bfs-depth* level)
+                 children)
              (map nil
                   (lambda (node)
                     (funcall fn node)
@@ -280,8 +283,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                            neighbors)))
                   node-list)
              (when children
-               (bfs-visit children)))))
-      (bfs-visit (list start)))))
+               (bfs-visit children (1+ level))))))
+      (bfs-visit (list start) 1))))
 
 (defmethod bfs-map-edges ((graph graph) start fn
                           &key
@@ -774,3 +777,50 @@ starting with the first node and ending in the most distant node on
 the path."
   (elt (sort (find-longest-paths graph) #'> :key #'length) 0))
 
+(defun graph-distance (graph node1 node2)
+  "Returns the (shortest) number of edges between node1 and node2. If node1 is node2, the distance is 0."
+  (let ((path (graph:bfs graph node1 node2)))
+    (when path
+      (1- (length path)))))
+
+;;; slow version
+#+nil
+(defun graph-distance-matrix-slow (graph)
+  (let* ((nodes (reverse (graph-nodes graph)))
+         (num-nodes (length nodes)))
+    (let ((distance (make-array (list num-nodes num-nodes))))
+      (loop for node1 in nodes
+         for i from 0
+         do (loop for node2 in nodes
+               for j from 0
+               do (setf (aref distance i j)
+                        (graph:graph-distance graph node1 node2))))
+      (values distance nodes))))
+
+;;; faster graph-distance-matrix that uses dfs-map and the *dfs-depth* special variable
+(defun graph-distance-matrix (graph)
+  "Returns two values, an array where each entry i,j is the distance
+from node i to node j (distance from a node to itself is 0) and an
+array of nodes in the order corresponding to a dimension of the array
+of distances."
+  (let ((outer-hash (make-hash-table :test 'eq)))
+    (map-nodes
+     (lambda (node1)
+       (let ((inner-hash (make-hash-table :test 'eq)))
+         (bfs-map graph node1
+                  (lambda (node2)
+                    (setf (gethash node2 inner-hash)
+                          (1- *bfs-depth*))))
+         (setf (gethash node1 outer-hash)
+               inner-hash)))
+     graph)
+    (let* ((nodes (loop for k being the hash-keys of outer-hash collect k))
+           (num-nodes (length nodes))
+           (node-array (make-array num-nodes :initial-contents nodes)))
+      (let ((distance-matrix (make-array (list num-nodes num-nodes))))
+        (loop for i from 0 below num-nodes
+             for inner-hash = (gethash (elt node-array i) outer-hash)
+           do (loop for j from 0 below num-nodes
+                 do (setf (aref distance-matrix i j)
+                          (gethash (elt node-array j) inner-hash))))
+        (values distance-matrix node-array)))))

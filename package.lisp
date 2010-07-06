@@ -92,4 +92,6 @@
            #:find-connected-components
 
            #:find-longest-paths
-           #:find-longest-path))
+           #:find-longest-path
+           #:graph-distance
+           #:graph-distance-matrix))
