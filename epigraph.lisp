@@ -71,9 +71,6 @@
 (defmethod nodes ((edge edge))
   (list (node1 edge) (node2 edge)))
 
-;;; support deprecated edge-nodes for a little while anyway
-(setf (fdefinition 'edge-nodes) #'nodes)
-
 (defgeneric edges-nodes-equal (edge1 edge2 &key test)
   (:method ((edge1 edge) (edge2 edge) &key (test 'equal))
     (and (funcall test (node1 edge1) (node1 edge2))
@@ -507,9 +504,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
              (graph-node-hash graph))
     l))
 
-;;; support deprecated graph-nodes for a little while anyway
-(setf (fdefinition 'graph-nodes) #'nodes)
-
 (defmethod map-nodes (fn (graph simple-edge-list-graph))
   (maphash (lambda (k v)
              (declare (ignore v))
@@ -526,9 +520,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 
 (defmethod edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))
-
-;;; support deprecated graph-edges for a little while anyway
-(setf (fdefinition 'graph-edges) #'edges)
 
 (defmethod map-edges (fn (graph simple-edge-list-graph))
   (map nil fn (edges graph)))
