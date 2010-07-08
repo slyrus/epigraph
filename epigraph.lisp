@@ -155,6 +155,10 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
 
+(defgeneric nodes (graph)
+  (:documentation "Returns the nodes of graph. Currently the
+  format in which the nodes are returned is not specified."))
+
 (defgeneric node-count (graph)
   (:documentation "Returns the number of nodes in graph."))
 
@@ -176,8 +180,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Returns the edge that connects node1 and node2 in
   graph if the edge is present in the graph, otherwise returns NIL."))
 
-(defgeneric graph-edges (graph)
-  (:documentation "Returns the edges of graph-edges. Currently the
+(defgeneric edges (graph)
+  (:documentation "Returns the edges of graph. Currently the
   format in which the edges are returned is not specified."))
 
 (defgeneric find-edges-from (graph node &key test)
@@ -491,13 +495,16 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (with-graph-iterator (next-entry graph)
     (nth-value 1 (next-entry))))
 
-(defmethod graph-nodes ((graph simple-edge-list-graph))
+(defmethod nodes ((graph simple-edge-list-graph))
   (let (l)
     (maphash (lambda (k v)
                (declare (ignore v))
                (push k l))
              (graph-node-hash graph))
     l))
+
+;;; support deprecated graph-nodes for a little while anyway
+(setf (fdefinition 'graph-nodes) #'nodes)
 
 (defmethod map-nodes (fn (graph simple-edge-list-graph))
   (maphash (lambda (k v)
@@ -513,14 +520,17 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
              (graph-node-hash graph))
     l))
 
-(defmethod graph-edges ((graph simple-edge-list-graph))
+(defmethod edges ((graph simple-edge-list-graph))
   (graph-edge-list graph))
 
+;;; support deprecated graph-edges for a little while anyway
+(setf (fdefinition 'graph-edges) #'edges)
+
 (defmethod map-edges (fn (graph simple-edge-list-graph))
-  (map nil fn (graph-edges graph)))
+  (map nil fn (edges graph)))
 
 (defmethod map-edges->list (fn (graph simple-edge-list-graph))
-  (map 'list fn (graph-edges graph)))
+  (map 'list fn (edges graph)))
 
 
 (defmethod copy-graph ((graph simple-edge-list-graph) &key copy-edges)
@@ -580,7 +590,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
               (equal (node2 edge) node2))
          (and (equal (node2 edge) node1)
               (equal (node1 edge) node2))))
-   (graph-edges graph)))
+   (edges graph)))
 
 (defmethod find-edge ((graph simple-edge-list-graph) node1 node2)
   (or (edgep graph node1 node2)
@@ -590,19 +600,19 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                             &key (test (graph-node-test graph)))
   (remove-if-not (lambda (x)
                    (funcall test node x))
-                 (graph-edges graph) :key #'node1))
+                 (edges graph) :key #'node1))
 
 (defmethod find-edges-to ((graph simple-edge-list-graph) node
                           &key (test (graph-node-test graph)))
   (remove-if-not (lambda (x)
                    (funcall test node x))
-                 (graph-edges graph) :key #'node2))
+                 (edges graph) :key #'node2))
 
 (defmethod find-self-edges ((graph simple-edge-list-graph) node
                             &key (test (graph-node-test graph)))
   (remove-if-not (lambda (x)
                    (funcall test (node1 x) (node2 x)))
-                 (graph-edges graph)))
+                 (edges graph)))
 
 (defmethod self-edge-p ((graph simple-edge-list-graph) edge
                         &key (test (graph-node-test graph)))
@@ -768,7 +778,7 @@ first node of the vector to the last node of the vector."
                                    depth *dfs-depth*
                                    path (cons node path)))))
               (make-array (length path) :initial-contents (nreverse path))))
-          (graph-nodes graph)))
+          (nodes graph)))
 
 (defun find-longest-path (graph)
   "Returns a single vector containing a longest path reachable from
@@ -784,7 +794,6 @@ node1 is node2, the distance is 0."
     (when path
       (1- (length path)))))
 
-;;; faster graph-distance-matrix that uses dfs-map and the *dfs-depth* special variable
 (defun graph-distance-hash-table (graph)
   "Returns a hash-table where each value is another hash-table, where
 each value is the distance from the node that is the key of the first

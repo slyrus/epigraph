@@ -43,7 +43,7 @@
            #:copy-edge
 
            #:graph
-           #:graph-nodes
+           #:nodes
            #:make-graph
            #:*default-graph-class*
 
@@ -58,7 +58,7 @@
            #:remove-edge-between-nodes
            #:edgep
            #:self-edge-p
-           #:graph-edges
+           #:edges
            #:find-edges-from
            #:find-edges-to
            #:find-edges-containing
