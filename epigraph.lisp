@@ -30,6 +30,13 @@
 
 (in-package :epigraph)
 
+(defgeneric nodes (object)
+  (:documentation "Returns a representation of the nodes contained in object."))
+
+(defgeneric edges (graph)
+  (:documentation "Returns the edges of graph. Currently the
+  format in which the edges are returned is not specified."))
+
 ;;;
 ;;; edges
 (defclass edge ()
@@ -61,10 +68,11 @@
                    :data (edge-data edge)))
   (:documentation "Returns a copy of the edge."))
 
-(defgeneric edge-nodes (edge)
-  (:method ((edge edge))
-    (list (node1 edge) (node2 edge)))
-  (:documentation "Returns a list of the nodes connected by edge."))
+(defmethod nodes ((edge edge))
+  (list (node1 edge) (node2 edge)))
+
+;;; support deprecated edge-nodes for a little while anyway
+(setf (fdefinition 'edge-nodes) #'nodes)
 
 (defgeneric edges-nodes-equal (edge1 edge2 &key test)
   (:method ((edge1 edge) (edge2 edge) &key (test 'equal))
@@ -77,8 +85,8 @@
 
 (defgeneric other-edge-node (edge node)
   (:method ((edge edge) node)
-    (when (member node (edge-nodes edge) :test 'equal)
-      (car (remove node (edge-nodes edge) :count 1 :test 'equal))))
+    (when (member node (nodes edge) :test 'equal)
+      (car (remove node (nodes edge) :count 1 :test 'equal))))
   (:documentation "Returns the other node in the edge. That is if
   there is an edge between A and B, other-edge-node of A would return
   B. If the edge is a self-edge, returns node."))
@@ -179,10 +187,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defgeneric edgep (graph node1 node2)
   (:documentation "Returns the edge that connects node1 and node2 in
   graph if the edge is present in the graph, otherwise returns NIL."))
-
-(defgeneric edges (graph)
-  (:documentation "Returns the edges of graph. Currently the
-  format in which the edges are returned is not specified."))
 
 (defgeneric find-edges-from (graph node &key test)
   (:documentation "Returns a list of the edges in graph that begin
