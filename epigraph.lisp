@@ -759,13 +759,12 @@ graph. Returns a list of vectors containing the longest paths for each
 node. Each vector represents the path to the farthest node from the
 first node of the vector to the last node of the vector."
   (mapcar (lambda (start-node)
-            (let ((depth 0) deepest path)
+            (let ((depth 0) path)
               (dfs-map graph
                        start-node
                        (lambda (node)
                          (if (> *dfs-depth* depth)
-                             (setf deepest node
-                                   depth *dfs-depth*
+                             (setf depth *dfs-depth*
                                    path (cons node path)))))
               (make-array (length path) :initial-contents (nreverse path))))
           (graph-nodes graph)))
@@ -818,3 +817,4 @@ of distances."
                  do (setf (aref distance-matrix i j)
                           (gethash (elt node-array j) inner-hash))))
         (values distance-matrix node-array)))))
+
