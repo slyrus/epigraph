@@ -822,3 +822,30 @@ of distances."
                           (gethash (elt node-array j) inner-hash))))
         (values distance-matrix node-array)))))
 
+;;; this is the same as graph-distance-matrix above, but uses a
+;;; different approach to get there.
+(defun floyd-warshall (graph)
+  (let ((outer-hash  (graph-distance-hash-table graph)))
+    (let* ((nodes (loop for k being the hash-keys of outer-hash collect k))
+           (num-nodes (length nodes))
+           (node-array (make-array num-nodes :initial-contents nodes)))
+      (let ((distance-matrix (make-array (list num-nodes num-nodes) :initial-element #xffffffff)))
+        (loop for i from 0 below num-nodes
+           do (loop for j from 0 below num-nodes
+                 do (setf (aref distance-matrix i j)
+                          (if (eql i j)
+                              0
+                              (if (edgep graph 
+                                         (aref node-array i)
+                                         (aref node-array j))
+                                  1
+                                  #xffffffff)))))
+        (loop for k from 0 below num-nodes
+           do (loop for i from 0 below num-nodes
+                 do (loop for j from 0 below num-nodes
+                       do (setf (aref distance-matrix i j)
+                               (min (aref distance-matrix i j)
+                                    (+ (aref distance-matrix i k)
+                                       (aref distance-matrix k j)))))))
+        
+        (values distance-matrix node-array)))))
