@@ -31,10 +31,12 @@
 (cl:defpackage #:epigraph
   (:use #:cl)
   (:nicknames #:graph)
-  (:export #:edge
+  (:export #:nodes
+           #:edges
+
+           #:edge
            #:node1
            #:node2
-           #:edge-nodes
            #:edge-data
            #:other-edge-node
            #:edges-nodes-equal
@@ -43,7 +45,6 @@
            #:copy-edge
 
            #:graph
-           #:graph-nodes
            #:make-graph
            #:*default-graph-class*
 
@@ -58,7 +59,6 @@
            #:remove-edge-between-nodes
            #:edgep
            #:self-edge-p
-           #:graph-edges
            #:find-edges-from
            #:find-edges-to
            #:find-edges-containing
