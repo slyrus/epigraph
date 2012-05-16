@@ -225,6 +225,12 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   function of one argument, for each node as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
+(defgeneric bfs-map-edges (graph start fn &key end key test)
+  (:documentation "Performs a breadth-first-search on graph, starting
+  at start until node end is found, if it is specified, calling fn, a
+  function of one argument, for each edge as it is found. [DOCUMENT
+  KEY AND TEST ARGS PLEASE!]"))
+
 (defgeneric dfs (graph start end &key key test neighbor-fn)
   (:documentation "Performs a depth-first-search on graph, starting at
   start and returns a path end if end is reachable from start,
@@ -234,6 +240,12 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Performs a depth-first-search on graph, starting at
   start until node end is found, if it is specified, calling fn, a
   function of one argument, for each node as it is found. [DOCUMENT
+  KEY AND TEST ARGS PLEASE!]"))
+
+(defgeneric dfs-map-edges (graph start fn &key end key test)
+  (:documentation "Performs a depth-first-search on graph, starting at
+  start until node end is found, if it is specified, calling fn, a
+  function of one argument, for each edge as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
 (defmethod bfs ((graph graph) start end
