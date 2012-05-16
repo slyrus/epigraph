@@ -214,30 +214,32 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   to the configuration of the graph and returns the resulting values
   in a list."))
 
-(defgeneric bfs (graph start end &key key test)
+(defgeneric bfs (graph start end &key key test neighbor-fn)
   (:documentation "Performs a breadth-first-search on graph starting
   at start and returns a path end if end is reachable from start,
   otherwise returns NIL. [DOCUMENT KEY AND TEST ARGS PLEASE!]"))
 
-(defgeneric bfs-map (graph start fn &key end key test)
+(defgeneric bfs-map (graph start fn &key end key test neighbor-fn)
   (:documentation "Performs a breadth-first-search on graph starting
   at start until node end is found, if it is specified, calling fn, a
   function of one argument, for each node as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
-(defgeneric dfs (graph start end &key key test)
-  (:documentation "Performs a depth-first-search on graph starting at
+(defgeneric dfs (graph start end &key key test neighbor-fn)
+  (:documentation "Performs a depth-first-search on graph, starting at
   start and returns a path end if end is reachable from start,
   otherwise returns NIL. [DOCUMENT KEY AND TEST ARGS PLEASE!]"))
 
-(defgeneric dfs-map (graph start fn &key end key test)
-  (:documentation "Performs a depth-first-search on graph starting at
+(defgeneric dfs-map (graph start fn &key end key test neighbor-fn)
+  (:documentation "Performs a depth-first-search on graph, starting at
   start until node end is found, if it is specified, calling fn, a
   function of one argument, for each node as it is found. [DOCUMENT
   KEY AND TEST ARGS PLEASE!]"))
 
 (defmethod bfs ((graph graph) start end
-                &key (key 'identity) (test (graph-node-test graph)))
+                &key (key 'identity)
+                     (test (graph-node-test graph))
+                     (neighbor-fn 'neighbors))
   (let ((visited-nodes (make-hash-table :test test)))
     (labels
         ((bfs-visit (node-set-list)
@@ -250,7 +252,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                         (return-from bfs
                           (nreverse (cons node path))))
                       (setf (gethash node visited-nodes) node)
-                      (let ((neighbors (neighbors graph node)))
+                      (let ((neighbors (funcall neighbor-fn graph node)))
                         (map nil
                              (lambda (x)
                                (unless (gethash x visited-nodes)
@@ -267,7 +269,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                     &key
                     (end nil end-supplied-p)
                     (key 'identity)
-                    (test (graph-node-test graph)))
+                    (test (graph-node-test graph))
+                    (neighbor-fn 'neighbors))
   (let ((visited-nodes (make-hash-table :test test)))
     (labels
         ((bfs-visit (node-list level)
@@ -280,7 +283,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                                (funcall test (funcall key node) end))
                       (return-from bfs-map))
                     (setf (gethash node visited-nodes) node)
-                    (let ((neighbors (neighbors graph node)))
+                    (let ((neighbors (funcall neighbor-fn graph node)))
                       (map nil
                            (lambda (x)
                              (unless (gethash x visited-nodes)
@@ -313,7 +316,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defmethod dfs ((graph graph) start end
                 &key
                 (key 'identity)
-                (test (graph-node-test graph)))
+                (test (graph-node-test graph))
+                (neighbor-fn 'neighbors))
   (let ((visited-nodes (make-hash-table :test test)))
     (labels ((dfs-visit (node path)
                (when (funcall test
@@ -321,7 +325,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                             end)
                  (return-from dfs (nreverse (cons node path))))
                (setf (gethash node visited-nodes) node)
-               (let ((neighbors (neighbors graph node)))
+               (let ((neighbors (funcall neighbor-fn graph node)))
                  (map nil
                       (lambda (x)
                         (unless (gethash x visited-nodes)                              
@@ -335,7 +339,8 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                     &key
                     (end nil end-supplied-p)
                     (key 'identity)
-                    (test (graph-node-test graph)))
+                    (test (graph-node-test graph))
+                    (neighbor-fn 'neighbors))
   (let ((visited-nodes (make-hash-table :test test))
         (*dfs-depth* 0))
     (labels ((dfs-visit (node path)
@@ -345,7 +350,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
                             (funcall test (funcall key node) end))
                    (return-from dfs-map))
                  (setf (gethash node visited-nodes) node)
-                 (let ((neighbors (neighbors graph node)))
+                 (let ((neighbors (funcall neighbor-fn graph node)))
                    (map nil
                         (lambda (x)
                           (unless (gethash x visited-nodes)
