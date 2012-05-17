@@ -1,6 +1,7 @@
 
 (asdf:defsystem :epigraph
   :name "epigraph"
+  :description "A library for representing and processing graphs (nodes and edges)"
   :author "Cyrus Harmon <ch-lisp@bobobeach.com>"
   :version "0.0.2"
   :licence "BSD"
@@ -11,8 +12,7 @@
                               '(:epigraph)))
   :serial t
   :components
-  ((:static-file "version" :pathname #p"version.lisp-expr")
-   (:static-file "COPYRIGHT")
+  ((:static-file "COPYRIGHT")
    (:static-file "README")
    (:cl-source-file "package")
    (:cl-source-file "utilities")
