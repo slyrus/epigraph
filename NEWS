@@ -1,6 +1,12 @@
 
 API Changes:
 
+2012.05.09 map-edges argument change -- INCOMPATIBILE API CHANGE
+
+* map-edges now takes a result-type argument (a la map). This is an
+  incompatible API change and all calls to map-edges will need to be
+  updated to reflect this change to the API.
+
 2008.12.11 map-nodes argument order change
 
 * map-nodes and map-nodes->list now take fn as the first argument,

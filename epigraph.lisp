@@ -157,6 +157,13 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defgeneric remove-node (graph node)
   (:documentation "Remove a node from the graph."))
 
+(defgeneric first-node (graph)
+  (:documentation "Returns the first node in a graph. Note that not
+  all graphs are rquired to support this function and that even graphs
+  that do support this might not have a consistent ordering of the
+  nodes such that successive first-node calls might not return the
+  same node."))
+
 (defgeneric graph-node-p (graph node)
   (:documentation "Returns t if node is a node in graph."))
 
@@ -184,6 +191,10 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
 (defgeneric edgep (graph node1 node2)
   (:documentation "Returns the edge that connects node1 and node2 in
   graph if the edge is present in the graph, otherwise returns NIL."))
+
+(defmethod self-edge-p (graph edge &key test)
+  (:documentation "Returns true if the edge connects a given node to
+  itself."))
 
 (defgeneric find-edges-from (graph node &key test)
   (:documentation "Returns a list of the edges in graph that begin
@@ -213,6 +224,15 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Calls FN on every node in the graph, without regard
   to the configuration of the graph and returns the resulting values
   in a list."))
+
+(defgeneric map-edges (fn result-type graph)
+  (:documentation "Calls fn, a function of one argument, for each edge
+  in graph in an unspecified order."))
+
+(defgeneric map-edges->list (fn graph)
+  (:documentation "Calls fn, a function of one argument, for each edge
+  in graph in an unspecified order and accumulates the return first
+  returned values of fn in a list."))
 
 (defgeneric bfs (graph start end &key key test neighbor-fn)
   (:documentation "Performs a breadth-first-search on graph starting
@@ -464,178 +484,6 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
          (append
           (when key `(:key ,key))
           (when test `(:test ,test)))))
-
-
-;;;
-;;; simple edge list graph
-(defclass simple-edge-list-graph (graph)
-  ;; FIXME! the :test for the node-hash should probably be the
-  ;; graph-node-test not necessarily 'equal!
-  ((node-hash :accessor graph-node-hash
-              :initarg :nodes
-              :initform (make-hash-table :test 'equal))
-   (edges :accessor graph-edge-list :initarg :edges :initform nil))
-  (:documentation "A concrete subclass of graph that represents the
-  edges in the graph with a list of edges between nodes."))
-
-(defmethod graph-node-p ((graph simple-edge-list-graph) node)
-  (gethash node (graph-node-hash graph)))
-
-(defmethod node-count ((graph simple-edge-list-graph))
-  (hash-table-count (graph-node-hash graph)))
-
-(defmethod add-node ((graph simple-edge-list-graph) node)
-  (unless (graph-node-p graph node)
-    (progn
-      (setf (gethash node (graph-node-hash graph)) node)))
-  node)
-
-;;; FIXME! What do we do if we try to remove a node which still has edges containing it?
-;;; 1. Remove the node and leave the edges?
-;;; 2. Remove the edges and remove the node?
-;;; 3. Throw an error?
-(defmethod remove-node ((graph simple-edge-list-graph) node)
-  (remhash node (graph-node-hash graph))
-  node)
-
-(defmacro with-graph-iterator ((function graph) &body body)
-  `(with-hash-table-iterator (,function (graph-node-hash ,graph))
-     ,@body))
- 
-(defgeneric first-node (graph)
-  (:documentation "Returns the first node in a graph. Note that not
-  all graphs are rquired to support this function and that even graphs
-  that do support this might not have a consistent ordering of the
-  nodes such that successive first-node calls might not return the
-  same node."))
-
-(defmethod first-node ((graph simple-edge-list-graph))
-  (with-graph-iterator (next-entry graph)
-    (nth-value 1 (next-entry))))
-
-(defmethod nodes ((graph simple-edge-list-graph))
-  (let (l)
-    (maphash (lambda (k v)
-               (declare (ignore v))
-               (push k l))
-             (graph-node-hash graph))
-    l))
-
-(defmethod map-nodes (fn (graph simple-edge-list-graph))
-  (maphash (lambda (k v)
-             (declare (ignore v))
-             (funcall fn k))
-           (graph-node-hash graph)))
-
-(defmethod map-nodes->list (fn (graph simple-edge-list-graph))
-  (let (l)
-    (maphash (lambda (k v)
-               (declare (ignore v))
-               (push (funcall fn k) l))
-             (graph-node-hash graph))
-    l))
-
-(defmethod edges ((graph simple-edge-list-graph))
-  (graph-edge-list graph))
-
-(defmethod map-edges (fn (graph simple-edge-list-graph))
-  (map nil fn (edges graph)))
-
-(defmethod map-edges->list (fn (graph simple-edge-list-graph))
-  (map 'list fn (edges graph)))
-
-
-(defmethod copy-graph ((graph simple-edge-list-graph) &key copy-edges)
-  (let ((new (make-instance (class-of graph))))
-    (setf (graph-node-hash new)
-          (alexandria:copy-hash-table (graph-node-hash graph))
-          (graph-edge-list new)
-          (if copy-edges
-              (loop for edge in (graph-edge-list graph)
-                 collect (copy-edge edge))
-              (graph-edge-list graph))
-          (graph-node-test new)
-          (graph-node-test graph))
-    new))
-
-(defmethod add-edge ((graph simple-edge-list-graph) (edge edge))
-  (unless (graph-node-p graph (node1 edge))
-    (error "Node ~A not in graph ~A" (node1 edge) graph))
-  (unless (graph-node-p graph (node2 edge))
-    (error "Node ~A not in graph ~A" (node2 edge) graph))
-  (push edge (graph-edge-list graph))
-  edge)
-
-(defmethod add-edge-between-nodes ((graph simple-edge-list-graph)
-                                   node1 node2
-                                   &key (edge-class *default-edge-class*))
-  (unless (graph-node-p graph node1)
-    (error "Node ~A not in graph ~A" node1 graph))
-  (unless (graph-node-p graph node2)
-    (error "Node ~A not in graph ~A" node2 graph))
-  (let ((edge (make-instance edge-class
-                             :node1 node1
-                             :node2 node2)))
-    (push edge (graph-edge-list graph))
-    edge))
-
-(defmethod remove-edge ((graph simple-edge-list-graph) (edge edge)
-                        &key (test (graph-node-test graph)))
-  (setf (graph-edge-list graph)
-        (remove edge
-                (graph-edge-list graph)
-                :test test)))
-
-(defmethod remove-edge-between-nodes ((graph simple-edge-list-graph)
-                                      node1 node2)
-  (let ((edge (edgep graph node1 node2)))
-    (when edge
-      (setf (graph-edge-list graph)
-            (remove edge (graph-edge-list graph))))))
-
-;;; FIXME! Should edgep check both (node1 . node2) and (node2 . node1)
-;;; or should we just check the former???
-(defmethod edgep ((graph simple-edge-list-graph) node1 node2)
-  (find-if
-   (lambda (edge)
-     (or (and (equal (node1 edge) node1)
-              (equal (node2 edge) node2))
-         (and (equal (node2 edge) node1)
-              (equal (node1 edge) node2))))
-   (edges graph)))
-
-(defmethod find-edge ((graph simple-edge-list-graph) node1 node2)
-  (or (edgep graph node1 node2)
-      (edgep graph node2 node1)))
-
-(defmethod find-edges-from ((graph simple-edge-list-graph) node
-                            &key (test (graph-node-test graph)))
-  (remove-if-not (lambda (x)
-                   (funcall test node x))
-                 (edges graph) :key #'node1))
-
-(defmethod find-edges-to ((graph simple-edge-list-graph) node
-                          &key (test (graph-node-test graph)))
-  (remove-if-not (lambda (x)
-                   (funcall test node x))
-                 (edges graph) :key #'node2))
-
-(defmethod find-self-edges ((graph simple-edge-list-graph) node
-                            &key (test (graph-node-test graph)))
-  (remove-if-not (lambda (x)
-                   (funcall test (node1 x) (node2 x)))
-                 (edges graph)))
-
-(defmethod self-edge-p ((graph simple-edge-list-graph) edge
-                        &key (test (graph-node-test graph)))
-  (funcall test (node1 edge) (node2 edge)))
-
-(defmethod find-edges-containing ((graph simple-edge-list-graph) node
-                                  &key (test (graph-node-test graph)))
-  (union (apply #'find-edges-from graph node
-                (when test `(:test ,test)))
-         (apply #'find-edges-to graph node
-                (when test `(:test ,test)))))
 
 (defmethod neighbors (graph node
                       &key (test (graph-node-test graph))) 
