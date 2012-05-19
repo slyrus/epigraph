@@ -192,7 +192,7 @@ specified by GRAPH-CLASS or by *DEFAULT-GRAPH-CLASS*."
   (:documentation "Returns the edge that connects node1 and node2 in
   graph if the edge is present in the graph, otherwise returns NIL."))
 
-(defmethod self-edge-p (graph edge &key test)
+(defgeneric self-edge-p (graph edge &key test)
   (:documentation "Returns true if the edge connects a given node to
   itself."))
 
