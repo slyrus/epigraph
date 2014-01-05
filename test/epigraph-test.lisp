@@ -102,7 +102,6 @@
 
 (5am:test (find-connected-components.2)
   (let ((g (make-graph)))
-    (declare (optimize (debug 3)))
     (add-node g "n1")
     (let ((n2 (add-node g "n2"))
           (n3 (add-node g "n3")))
