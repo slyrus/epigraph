@@ -71,25 +71,22 @@
     (nth-value 1 (next-entry))))
 
 (defmethod nodes ((graph simple-edge-list-graph))
-  (let (l)
-    (maphash (lambda (k v)
-               (declare (ignore v))
-               (push k l))
-             (graph-node-hash graph))
-    l))
+  (alexandria:hash-table-keys (graph-node-hash graph)))
 
 (defmethod map-nodes (fn (graph simple-edge-list-graph))
-  (maphash (lambda (k v)
-             (declare (ignore v))
-             (funcall fn k))
-           (graph-node-hash graph)))
+  (let ((keys (alexandria:hash-table-keys (graph-node-hash graph))))
+    (map nil
+         (lambda (k)
+           (funcall fn k))
+         keys)))
 
 (defmethod map-nodes->list (fn (graph simple-edge-list-graph))
   (let (l)
-    (maphash (lambda (k v)
-               (declare (ignore v))
-               (push (funcall fn k) l))
-             (graph-node-hash graph))
+    (let ((keys (alexandria:hash-table-keys (graph-node-hash graph))))
+      (map nil
+           (lambda (k)
+             (push (funcall fn k) l))
+           keys))
     l))
 
 (defmethod edges ((graph simple-edge-list-graph))
